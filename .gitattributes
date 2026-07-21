@@ -1,0 +1,12 @@
+# Simpan semua teks dengan LF di repo agar diff tetap bersih lintas OS
+# (dev di Windows, CI di Linux).
+* text=auto eol=lf
+
+# Berkas biner — jangan diutak-atik
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.pdf binary
+*.xlsx binary
+*.dump binary

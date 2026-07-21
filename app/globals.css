@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Arta Design System — nilai token per tema (PRD §7.4).
+ * Ganti tema = ganti nilai variabel; komponen tidak pernah hardcode warna.
+ */
+:root {
+  --background: #f7f7fb;
+  --surface: #ffffff;
+  --foreground: #0f172a;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+}
+
+.dark {
+  --background: #0b0e1a;
+  --surface: #151a2c;
+  --foreground: #e2e8f0;
+  --muted-foreground: #94a3b8;
+  --border: #293045;
+  --primary: #818cf8;
+  --primary-foreground: #0b0e1a;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/* Jalur PDF laporan: sembunyikan navigasi, paksa latar terang & hemat tinta */
+@media print {
+  aside,
+  header,
+  nav {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+  :root {
+    --background: #ffffff;
+    --surface: #ffffff;
+    --foreground: #0f172a;
+    --muted-foreground: #475569;
+    --border: #cbd5e1;
+  }
+  .shadow-soft {
+    box-shadow: none !important;
+  }
+  table {
+    font-size: 11px;
+  }
+}
