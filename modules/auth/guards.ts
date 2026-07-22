@@ -43,10 +43,15 @@ export async function requireGuardian(): Promise<GuardianProfile> {
   return guardian;
 }
 
-/** Guard layout (admin): wajib sesi + baris admin_users aktif (opsional cek role). */
-export async function requireAdmin(
-  allowedRoles?: string[],
-): Promise<AdminProfile> {
+/** Peran yang WAJIB 2FA (PRD §6.1) — memegang uang & data finansial. */
+const MFA_REQUIRED_ROLES = ["super_admin", "admin_keuangan"];
+
+/**
+ * Guard dasar: sesi + baris admin_users aktif, TANPA penegakan 2FA.
+ * Dipakai halaman gerbang keamanan (/admin/2fa, /admin/keamanan) agar tidak
+ * terjadi loop redirect.
+ */
+export async function requireAdminBasic(): Promise<AdminProfile> {
   const supabase = createClient();
   const {
     data: { user },
@@ -60,7 +65,6 @@ export async function requireAdmin(
     .maybeSingle();
 
   if (!adminRow || !adminRow.is_active) redirect("/admin/login");
-  if (allowedRoles && !allowedRoles.includes(adminRow.role)) redirect("/admin");
 
   return {
     id: adminRow.id,
@@ -68,4 +72,34 @@ export async function requireAdmin(
     role: adminRow.role,
     school_id: adminRow.school_id,
   };
+}
+
+/**
+ * Guard layout (admin): sesi + admin aktif + cek role + PENEGAKAN 2FA.
+ *
+ * Dua kondisi 2FA yang ditangani:
+ * 1. Sudah punya faktor tapi sesi masih aal1  → wajib verifikasi (/admin/2fa)
+ * 2. Peran wajib 2FA tapi belum mendaftar     → wajib daftar (/admin/keamanan)
+ */
+export async function requireAdmin(
+  allowedRoles?: string[],
+): Promise<AdminProfile> {
+  const admin = await requireAdminBasic();
+  const supabase = createClient();
+
+  const { data: aal } =
+    await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+
+  // Punya faktor terverifikasi tetapi sesi belum dinaikkan → verifikasi dulu
+  if (aal?.nextLevel === "aal2" && aal.currentLevel === "aal1") {
+    redirect("/admin/2fa");
+  }
+
+  if (MFA_REQUIRED_ROLES.includes(admin.role) && aal?.nextLevel !== "aal2") {
+    redirect("/admin/keamanan?wajib=1");
+  }
+
+  if (allowedRoles && !allowedRoles.includes(admin.role)) redirect("/admin");
+
+  return admin;
 }

@@ -113,14 +113,20 @@ export async function loginAdmin(
   }
 
   const supabase = createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
-  if (error) {
+  const { data: signIn, error } = await supabase.auth.signInWithPassword(
+    parsed.data,
+  );
+  if (error || !signIn.user) {
     return { ok: false, error: "Email atau kata sandi salah." };
   }
 
+  // WAJIB filter auth_user_id: RLS memperbolehkan admin melihat rekan
+  // se-sekolah, jadi tanpa filter ini `maybeSingle()` gagal begitu sekolah
+  // punya lebih dari satu admin.
   const { data: adminRow } = await supabase
     .from("admin_users")
     .select("id, is_active")
+    .eq("auth_user_id", signIn.user.id)
     .maybeSingle();
   if (!adminRow || !adminRow.is_active) {
     await supabase.auth.signOut();

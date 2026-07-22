@@ -6,9 +6,15 @@ const PARENT_PREFIXES = ["/beranda", "/upload", "/riwayat", "/pengumuman", "/aku
 /**
  * Refresh sesi Supabase di setiap request + guard rute lapis kedua
  * (lapis utama otorisasi tetap RLS — PRD §3.1). Cek role detail ada di layout.
+ *
+ * `requestHeaders` membawa `x-nonce` & CSP ke server component; Next.js
+ * membaca header CSP dari request untuk menempelkan nonce ke skrip miliknya.
  */
-export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
+export async function updateSession(
+  request: NextRequest,
+  requestHeaders: Headers,
+) {
+  let response = NextResponse.next({ request: { headers: requestHeaders } });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,7 +30,7 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );
-          response = NextResponse.next({ request });
+          response = NextResponse.next({ request: { headers: requestHeaders } });
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options),
           );

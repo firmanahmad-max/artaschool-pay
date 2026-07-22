@@ -58,6 +58,8 @@ export function UploadForm({
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [ocrBusy, setOcrBusy] = useState(false);
+  const [ocrNote, setOcrNote] = useState<string | null>(null);
 
   const child = students.find((c) => c.id === childId)!;
 
@@ -103,6 +105,50 @@ export function UploadForm({
     setPreview(
       compressed.type.startsWith("image/") ? URL.createObjectURL(compressed) : null,
     );
+
+    // OCR (v2): isi saran nominal/bank/tanggal. Best-effort — kegagalan
+    // diabaikan diam-diam, dan TIDAK pernah menimpa isian yang sudah diketik.
+    setOcrBusy(true);
+    setOcrNote(null);
+    try {
+      const fd = new FormData();
+      fd.set("proof", compressed);
+      const res = await fetch("/api/ocr/proof", { method: "POST", body: fd });
+      const json = (await res.json()) as {
+        enabled: boolean;
+        hint: {
+          amount?: number;
+          bankName?: string;
+          transferredAt?: string;
+          senderName?: string;
+        } | null;
+      };
+      if (json.enabled && json.hint) {
+        const terisi: string[] = [];
+        if (json.hint.amount && !amountEdited) {
+          setAmount(String(json.hint.amount));
+          setAmountEdited(true);
+          terisi.push("nominal");
+        }
+        if (json.hint.senderName && !senderName) {
+          setSenderName(json.hint.senderName);
+          terisi.push("nama pengirim");
+        }
+        if (json.hint.transferredAt && !transferredAt) {
+          setTransferredAt(json.hint.transferredAt);
+          terisi.push("tanggal");
+        }
+        if (terisi.length > 0) {
+          setOcrNote(
+            `Kami isikan ${terisi.join(", ")} dari bukti Anda — mohon periksa dan perbaiki bila keliru.`,
+          );
+        }
+      }
+    } catch {
+      // abaikan: OCR tidak boleh menghambat upload
+    } finally {
+      setOcrBusy(false);
+    }
   }
 
   function onSubmit(e: React.FormEvent) {
@@ -288,6 +334,14 @@ export function UploadForm({
             {file && (
               <p className="text-xs text-muted-foreground">
                 {file.name} · {(file.size / 1024).toFixed(0)} KB
+              </p>
+            )}
+            {ocrBusy && (
+              <p className="text-xs text-muted-foreground">Membaca isi bukti…</p>
+            )}
+            {ocrNote && (
+              <p className="rounded-md bg-primary/10 px-3 py-2 text-xs text-primary">
+                {ocrNote}
               </p>
             )}
             {preview && (

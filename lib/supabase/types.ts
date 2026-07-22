@@ -72,25 +72,31 @@ export type Database = {
       admin_users: {
         Row: {
           auth_user_id: string | null
+          daily_digest: boolean
           full_name: string
           id: string
           is_active: boolean | null
+          phone: string | null
           role: string
           school_id: string
         }
         Insert: {
           auth_user_id?: string | null
+          daily_digest?: boolean
           full_name: string
           id?: string
           is_active?: boolean | null
+          phone?: string | null
           role: string
           school_id: string
         }
         Update: {
           auth_user_id?: string | null
+          daily_digest?: boolean
           full_name?: string
           id?: string
           is_active?: boolean | null
+          phone?: string | null
           role?: string
           school_id?: string
         }
@@ -803,11 +809,22 @@ export type Database = {
       current_guardian_id: { Args: never; Returns: string }
       current_guardian_school_id: { Args: never; Returns: string }
       current_guardian_student_ids: { Args: never; Returns: string[] }
+      enqueue_daily_digest: { Args: never; Returns: number }
       enqueue_notification: {
         Args: {
           p_body: string
           p_guardian_id: string
           p_payload?: Json
+          p_school_id: string
+          p_template: string
+        }
+        Returns: number
+      }
+      enqueue_notification_phone: {
+        Args: {
+          p_body: string
+          p_payload?: Json
+          p_phone: string
           p_school_id: string
           p_template: string
         }

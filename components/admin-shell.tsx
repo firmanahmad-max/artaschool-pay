@@ -9,6 +9,7 @@ import {
   Megaphone,
   Receipt,
   ScrollText,
+  ShieldCheck,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -95,6 +96,14 @@ export function AdminShell({
               <Bell className="h-5 w-5" aria-hidden />
             </button>
             <ThemeToggle />
+            <Link
+              href="/admin/keamanan"
+              aria-label="Keamanan akun"
+              title="Keamanan akun (2FA)"
+              className="rounded-md p-2 text-muted-foreground hover:text-foreground"
+            >
+              <ShieldCheck className="h-5 w-5" aria-hidden />
+            </Link>
             <div className="hidden text-right sm:block">
               <p className="text-sm font-medium leading-tight">{adminName}</p>
               <p className="text-xs text-muted-foreground">

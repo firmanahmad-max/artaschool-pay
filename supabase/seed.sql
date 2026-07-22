@@ -42,6 +42,11 @@ insert into guardian_students (guardian_id, student_id, relation) values
   ('00000000-0000-0000-0000-000000000041', '00000000-0000-0000-0000-000000000033', 'ayah'),
   ('00000000-0000-0000-0000-000000000042', '00000000-0000-0000-0000-000000000032', 'ibu');
 
+-- Kepala sekolah penerima digest harian (auth_user_id diisi saat akun dibuat)
+insert into admin_users (school_id, full_name, role, phone, daily_digest)
+values ('00000000-0000-0000-0000-000000000001', 'Kepala Sekolah',
+        'kepala_sekolah', '+6281234567090', true);
+
 insert into payment_types (id, school_id, name, default_amount, is_recurring) values
   ('00000000-0000-0000-0000-000000000051', '00000000-0000-0000-0000-000000000001', 'SPP', 350000, true),
   ('00000000-0000-0000-0000-000000000052', '00000000-0000-0000-0000-000000000001', 'Daftar Ulang', 500000, false);

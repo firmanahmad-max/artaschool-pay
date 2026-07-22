@@ -79,7 +79,24 @@ Acuan untuk development lokal (Claude Code / manual). Sumber kebenaran produk: `
   - Tingkat 6 = LULUS: tidak didaftarkan ke tahun baru, opsional dinonaktifkan (tak dapat tagihan baru, riwayat tetap utuh). Tidak pernah membuat kelas tingkat 7
   - UI `/admin/tahun-ajaran/naik-kelas`: pratinjau per kelas + jumlah siswa + penanda kelas baru, eksekusi terpisah dari aktivasi tahun ajaran
   - Verifikasi nyata: 6 siswa naik (1A→2A, 4A→5A), 2 kelas dibuat, 1 siswa lulus dinonaktifkan; jalankan ulang → 0 duplikat
-- ⬜ Sisa v2: OCR bukti (Sumopod — butuh kredensial), 2FA TOTP admin, nonce CSP, digest harian kepsek
+- ✅ Nonce CSP (22 Jul 2026) — **utang teknis Sprint 10 LUNAS**:
+  - `lib/csp.ts` + `middleware.ts`: nonce baru tiap request, `'strict-dynamic'`; `'unsafe-inline'` HILANG dari script-src. CSP pindah dari `next.config.mjs` ke middleware (nonce tak bisa statis)
+  - style-src masih `'unsafe-inline'` — Next.js menyuntikkan <style> untuk CSS-in-JS & optimasi font; risikonya jauh lebih rendah
+  - Verifikasi nyata: 2 request → 2 nonce berbeda; 13/14 skrip ber-nonce; hidrasi hidup; nol pelanggaran CSP; login admin penuh berhasil di bawah CSP ketat
+- ✅ Digest harian kepsek (22 Jul 2026, migration `012_daily_digest.sql`):
+  - `admin_users` + kolom `phone` & `daily_digest`; `enqueue_notification_phone` (penerima non-wali); `enqueue_daily_digest` (uang masuk hari ini WITA, antrean, tunggakan)
+  - Worker `POST /api/jobs/digest` (x-cron-secret), cron Vercel `0 10 * * 1-6` = 18.00 WITA Sen–Sab. RPC dicabut dari anon/authenticated
+  - Verifikasi nyata: 401 tanpa secret; digest terantre & terkirim; ketiga angka cocok dgn query DB
+- ✅ 2FA TOTP admin (22 Jul 2026) — `[auth.mfa.totp]` diaktifkan di config.toml:
+  - `modules/auth/mfa.ts` (enroll/confirm/verify/unenroll) + `requireAdminBasic` vs `requireAdmin` (yang menegakkan MFA). Halaman gerbang `/admin/2fa` & `/admin/keamanan` sengaja DI LUAR layout admin agar tak loop redirect
+  - `super_admin` & `admin_keuangan` WAJIB 2FA sebelum bisa membuka dashboard
+  - Verifikasi nyata: dashboard → dialihkan ke Keamanan; QR+secret tampil; kode TOTP asli → 2FA aktif (faktor `verified` di DB + audit); logout→login → gerbang `/admin/2fa` → dashboard
+  - 🐞 2 bug nyata tertangkap saat verifikasi: (a) MFA action memakai `requireAdmin` → sirkular (harus punya 2FA untuk mendaftar 2FA); (b) `loginAdmin` tidak memfilter `auth_user_id` → `maybeSingle()` gagal begitu sekolah punya >1 admin. Keduanya diperbaiki
+- 🟡 OCR bukti (22 Jul 2026) — **adapter siap, integrasi menunggu kredensial**:
+  - `modules/payments/ocr.ts` + `POST /api/ocr/proof`: tanpa `OCR_API_URL`/`OCR_API_KEY` → OCR mati, form manual seperti biasa (pola sama dgn gateway WA)
+  - Hasil OCR HANYA saran isian; tidak pernah menimpa yang sudah diketik ortu, dan tidak pernah menggagalkan upload
+  - Teruji: parser Rupiah 5/5 (`Rp 1.250.000`, `1,250,000.00`, dst); endpoint ter-guard (303); upload tetap normal saat OCR mati
+  - ⚠️ BELUM diuji terhadap layanan Sumopod sungguhan — bentuk respons JSON mungkin perlu disesuaikan saat kredensial tersedia
 
 ## Sisa sebelum Go-Live (bukan kode)
 - UAT 1 sekolah pilot: 1 siklus SPP penuh tanpa WhatsApp manual (definisi selesai MVP, PRD §9)
