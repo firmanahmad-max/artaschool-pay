@@ -13,7 +13,9 @@
     "typegen": "supabase gen types typescript --local > lib/supabase/types.ts",
     "seed:admin": "node scripts/seed-dev-admin.mjs",
     "pentest": "node scripts/pentest.mjs",
-    "backup:drill": "node scripts/backup-drill.mjs"
+    "backup:drill": "node scripts/backup-drill.mjs",
+    "uat": "node scripts/uat-cycle.mjs",
+    "bootstrap:sekolah": "node scripts/bootstrap-sekolah.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",

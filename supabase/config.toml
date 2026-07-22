@@ -271,6 +271,10 @@ max_frequency = "5s"
 [auth.sms.test_otp]
 6281234567001 = "123456"
 6281234567002 = "123456"
+# nomor gladi resik UAT (scripts/uat-cycle.mjs)
+6281299900001 = "123456"
+6281299900002 = "123456"
+6281299900003 = "123456"
 
 # Configure logged in session timeouts.
 # [auth.sessions]

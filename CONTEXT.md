@@ -98,8 +98,35 @@ Acuan untuk development lokal (Claude Code / manual). Sumber kebenaran produk: `
   - Teruji: parser Rupiah 5/5 (`Rp 1.250.000`, `1,250,000.00`, dst); endpoint ter-guard (303); upload tetap normal saat OCR mati
   - ⚠️ BELUM diuji terhadap layanan Sumopod sungguhan — bentuk respons JSON mungkin perlu disesuaikan saat kredensial tersedia
 
+## Persiapan UAT (22 Jul 2026)
+- ✅ **Gladi resik siklus penuh** — `npm run uat` (`scripts/uat-cycle.mjs`), **18/18 lulus**:
+  membuat sekolah pilot TERPISAH di DB yang sama (sekaligus menguji isolasi multi-tenant),
+  lalu menjalankan siklus SPP utuh dengan sesi asli: admin daftar 2FA → generate tagihan
+  (idempotent) → 3 wali login OTP → 2 upload bukti → admin terima/minta revisi → wali kirim
+  ulang → admin terima → 1 pembayaran tunai → 3 tagihan LUNAS Rp 1.200.000, notifikasi
+  terantre otomatis, jejak audit lengkap, admin pilot tidak melihat data sekolah lain
+- 🔴 **LUBANG KEAMANAN DITEMUKAN & DITUTUP** (migration `013_enforce_mfa_in_rpc.sql`):
+  2FA sebelumnya hanya ditegakkan di lapisan aplikasi (`requireAdmin`). Terbukti pada gladi
+  resik bahwa penyerang dgn kata sandi admin curian bisa masuk pada **aal1** lalu memanggil
+  `approve_payment` LANGSUNG ke PostgREST — melewati 2FA sepenuhnya. Melanggar prinsip
+  PRD §3.1 (database = sumber kebenaran otorisasi). Perbaikan: helper `admin_mfa_ok()` +
+  penegakan aal2 di dalam `approve_payment`, `review_payment`, `waive_bill`, `unwaive_bill`,
+  `record_cash_payment`. Diuji ulang: ketiganya DITOLAK pada aal1, alur sah (aal2) tetap jalan
+- ✅ Dokumen & perkakas UAT:
+  - `docs/UAT-SEKOLAH-PILOT.md` — 5 tahap, ~35 skenario uji, kriteria LULUS terukur
+    (tunggakan cocok 100%, median verifikasi < 4 jam, revisi < 10%, 80% wali mandiri),
+    formulir keluhan, kalimat undangan siap salin
+  - `docs/CHECKLIST-GO-LIVE.md` — kesiapan produksi (Supabase+PITR+MFA, gateway WA, OTP,
+    Vercel+cron, akun, verifikasi keamanan, gladi resik, dukungan)
+  - `npm run bootstrap:sekolah` — menyiapkan sekolah pilot pada instalasi KOSONG
+    (sandi acak, konfirmasi interaktif, MENOLAK bila DB sudah berisi sekolah — teruji)
+- ⚠️ Catatan: nomor OTP uji UAT ditambahkan ke `config.toml` (`[auth.sms.test_otp]`) —
+  hanya berlaku lokal, tidak berpengaruh di produksi
+
 ## Sisa sebelum Go-Live (bukan kode)
-- UAT 1 sekolah pilot: 1 siklus SPP penuh tanpa WhatsApp manual (definisi selesai MVP, PRD §9)
+- **UAT lapangan oleh sekolah pilot** — butuh sekolah, admin, dan wali sungguhan;
+  ikuti `docs/UAT-SEKOLAH-PILOT.md`. Gladi resik teknis sudah lulus, tetapi
+  keterpakaian oleh orang tua sungguhan hanya bisa dibuktikan di lapangan
 - Isi `WA_GATEWAY_URL`/`WA_GATEWAY_TOKEN` (Fonnte/Wablas) — tanpa itu notifikasi jalan mode dry-run
 - 2FA TOTP untuk `super_admin` & `admin_keuangan` (PRD §6.1) — dijadwalkan v2
 - Aktifkan PITR + jadwal export terenkripsi di Supabase Cloud
