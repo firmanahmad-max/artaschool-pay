@@ -10,9 +10,11 @@ import {
   getActiveStudentsForSelect,
   getArrearsByClass,
   getBills,
+  getOpenBillsForStudent,
   getPaymentTypes,
 } from "@/modules/billing/queries";
 import { getActiveYear, getClasses } from "@/modules/students/queries";
+import { CashPaymentForm } from "./cash-form";
 import {
   GenerateBillsForm,
   IndividualBillForm,
@@ -33,7 +35,7 @@ const STATUS_OPTIONS = [
 export default async function TagihanPage({
   searchParams,
 }: {
-  searchParams: { status?: string; kelas?: string; jenis?: string };
+  searchParams: { status?: string; kelas?: string; jenis?: string; tunai?: string };
 }) {
   const activeYear = await getActiveYear();
   const [types, students, classes, arrears, bills] = await Promise.all([
@@ -50,6 +52,11 @@ export default async function TagihanPage({
 
   const activeTypes = types.filter((t) => t.is_active);
   const totalArrears = arrears.reduce((sum, a) => sum + a.total, 0);
+
+  const cashStudent = searchParams.tunai
+    ? students.find((s) => s.id === searchParams.tunai)
+    : undefined;
+  const cashBills = cashStudent ? await getOpenBillsForStudent(cashStudent.id) : [];
 
   return (
     <div className="space-y-6">
@@ -152,6 +159,60 @@ export default async function TagihanPage({
         </CardHeader>
         <CardContent>
           <IndividualBillForm types={activeTypes} students={students} />
+        </CardContent>
+      </Card>
+
+      {/* Pembayaran tunai / QRIS (K5) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Pembayaran tunai / QRIS</CardTitle>
+          <CardDescription>
+            Uang diterima langsung di sekolah — langsung tercatat lunas tanpa
+            melewati antrean verifikasi.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <form method="get" className="flex flex-wrap items-end gap-3">
+            {/* pertahankan filter daftar tagihan di bawah */}
+            {searchParams.status && (
+              <input type="hidden" name="status" value={searchParams.status} />
+            )}
+            {searchParams.kelas && (
+              <input type="hidden" name="kelas" value={searchParams.kelas} />
+            )}
+            {searchParams.jenis && (
+              <input type="hidden" name="jenis" value={searchParams.jenis} />
+            )}
+            <div className="space-y-1">
+              <label htmlFor="tunai" className="text-xs text-muted-foreground">
+                Siswa
+              </label>
+              <Select
+                id="tunai"
+                name="tunai"
+                defaultValue={searchParams.tunai ?? ""}
+                className="w-64"
+              >
+                <option value="">Pilih siswa…</option>
+                {students.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.full_name} ({s.nis})
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <Button type="submit" variant="outline">
+              Muat Tagihan
+            </Button>
+          </form>
+
+          {cashStudent && (
+            <CashPaymentForm
+              studentId={cashStudent.id}
+              studentName={cashStudent.full_name}
+              bills={cashBills}
+            />
+          )}
         </CardContent>
       </Card>
 

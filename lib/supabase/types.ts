@@ -790,6 +790,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      class_label_suffix: {
+        Args: { p_grade: number; p_label: string }
+        Returns: string
+      }
       complete_notification_job: {
         Args: { p_error?: string; p_id: number; p_ok: boolean }
         Returns: undefined
@@ -808,6 +812,14 @@ export type Database = {
           p_template: string
         }
         Returns: number
+      }
+      find_duplicate_proof: {
+        Args: {
+          p_exclude_payment_id?: string
+          p_school_id: string
+          p_sha256: string
+        }
+        Returns: string
       }
       format_rupiah: { Args: { p: number }; Returns: string }
       generate_bills: {
@@ -828,9 +840,40 @@ export type Database = {
         }
         Returns: undefined
       }
+      preview_promotion: {
+        Args: { p_from_year: string; p_to_year: string }
+        Returns: {
+          from_class_id: string
+          from_grade: number
+          from_label: string
+          graduates: boolean
+          student_count: number
+          to_class_exists: boolean
+          to_grade: number
+          to_label: string
+        }[]
+      }
+      promote_students: {
+        Args: {
+          p_deactivate_graduates?: boolean
+          p_from_year: string
+          p_to_year: string
+        }
+        Returns: Json
+      }
       recompute_bill_amount_paid: {
         Args: { p_bill_id: string }
         Returns: undefined
+      }
+      record_cash_payment: {
+        Args: {
+          p_allocations: Json
+          p_amount: number
+          p_method?: string
+          p_note?: string
+          p_student_id: string
+        }
+        Returns: string
       }
       review_payment: {
         Args: { p_action: string; p_note: string; p_payment_id: string }

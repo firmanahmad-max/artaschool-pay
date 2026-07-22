@@ -52,11 +52,31 @@ export async function getPaymentDetail(paymentId: string) {
   const { data: p } = await supabase
     .from("payments")
     .select(
-      "id, amount, method, status, bank_name, sender_name, transferred_at, created_at, proof_path, requested_bill_ids, review_note, student_id, guardians(full_name, phone), students(nis, full_name, class_enrollments(classes(label, academic_years(is_active))))",
+      "id, amount, method, status, bank_name, sender_name, transferred_at, created_at, proof_path, proof_sha256, requested_bill_ids, review_note, student_id, school_id, guardians(full_name, phone), students(nis, full_name, class_enrollments(classes(label, academic_years(is_active))))",
     )
     .eq("id", paymentId)
     .maybeSingle();
   if (!p) return null;
+
+  // Bukti ganda: pembayaran lain dengan hash identik (v2 — tanpa AI)
+  let duplicate: { id: string; studentName: string; status: string } | null = null;
+  if (p.proof_sha256) {
+    const { data: dup } = await supabase
+      .from("payments")
+      .select("id, status, students(full_name)")
+      .eq("school_id", p.school_id)
+      .eq("proof_sha256", p.proof_sha256)
+      .neq("id", p.id)
+      .limit(1)
+      .maybeSingle();
+    if (dup) {
+      duplicate = {
+        id: dup.id,
+        studentName: dup.students?.full_name ?? "—",
+        status: dup.status,
+      };
+    }
+  }
 
   const requestedIds = new Set(p.requested_bill_ids ?? []);
 
@@ -105,6 +125,7 @@ export async function getPaymentDetail(paymentId: string) {
     created_at: p.created_at,
     review_note: p.review_note,
     proofUrl,
+    duplicate,
     isPdf: p.proof_path?.endsWith(".pdf") ?? false,
     guardianName: p.guardians?.full_name ?? "Input admin",
     guardianPhone: p.guardians?.phone ?? "",

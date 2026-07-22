@@ -68,6 +68,19 @@ Acuan untuk development lokal (Claude Code / manual). Sumber kebenaran produk: `
   - Dokumentasi operasional: `docs/PANDUAN-ADMIN.md` (bahasa non-teknis, alur harian, troubleshooting)
   - ⚠️ Utang teknis tercatat: CSP masih perlu `'unsafe-inline'` untuk skrip hidrasi Next.js → pindah ke nonce per-request di v2
 
+## v2 — sedang berjalan
+- ✅ Deteksi bukti ganda + pembayaran tunai/QRIS (22 Jul 2026, migration `010_duplicate_and_cash.sql`):
+  - `find_duplicate_proof` memakai `proof_sha256` (disimpan sejak Sprint 5) — tanpa AI. `submit_payment` menolak bukti identik yang masih hidup (pending/approved); rantai revisi DIKECUALIKAN agar ortu boleh kirim ulang bukti sama bila hanya nominal yang salah
+  - Panel verifikasi menampilkan penanda "Bukti ganda terdeteksi" + tautan silang ke pembayaran kembarannya (kasus nyata: bukti dikirim ulang setelah ditolak)
+  - `record_cash_payment` (K5): admin catat tunai/QRIS → langsung approved + alokasi dieksekusi, tanpa antrean verifikasi; form di `/admin/tagihan?tunai=<siswa>`
+  - Verifikasi nyata: tunai Rp 550.000 → SPP lunas & Daftar Ulang jadi `partial` (200rb/500rb); kirim bukti identik 2× → ditolak dgn pesan jelas, **tanpa payment/objek storage yatim** (4 payment = 4 hash unik = 4 objek)
+- ✅ Wizard naik kelas (22 Jul 2026, migration `011_promotion_wizard.sql`):
+  - `preview_promotion` (pratinjau tanpa mengubah apa pun) + `promote_students` (idempotent). Pemetaan otomatis "4A"→"5A" via `class_label_suffix`; kelas tujuan dibuat otomatis bila belum ada
+  - Tingkat 6 = LULUS: tidak didaftarkan ke tahun baru, opsional dinonaktifkan (tak dapat tagihan baru, riwayat tetap utuh). Tidak pernah membuat kelas tingkat 7
+  - UI `/admin/tahun-ajaran/naik-kelas`: pratinjau per kelas + jumlah siswa + penanda kelas baru, eksekusi terpisah dari aktivasi tahun ajaran
+  - Verifikasi nyata: 6 siswa naik (1A→2A, 4A→5A), 2 kelas dibuat, 1 siswa lulus dinonaktifkan; jalankan ulang → 0 duplikat
+- ⬜ Sisa v2: OCR bukti (Sumopod — butuh kredensial), 2FA TOTP admin, nonce CSP, digest harian kepsek
+
 ## Sisa sebelum Go-Live (bukan kode)
 - UAT 1 sekolah pilot: 1 siklus SPP penuh tanpa WhatsApp manual (definisi selesai MVP, PRD §9)
 - Isi `WA_GATEWAY_URL`/`WA_GATEWAY_TOKEN` (Fonnte/Wablas) — tanpa itu notifikasi jalan mode dry-run

@@ -87,6 +87,23 @@ export async function getArrearsByClass() {
   return Array.from(map.values()).sort((a, b) => b.total - a.total);
 }
 
+/** Tagihan terbuka satu siswa — dipakai form pembayaran tunai/QRIS. */
+export async function getOpenBillsForStudent(studentId: string) {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("bills")
+    .select("id, amount, amount_paid, period, payment_types(name)")
+    .eq("student_id", studentId)
+    .in("status", ["unpaid", "partial"])
+    .order("period", { ascending: true, nullsFirst: false });
+
+  return (data ?? []).map((b) => ({
+    id: b.id,
+    label: `${b.payment_types?.name ?? "—"}${b.period ? " " + b.period.slice(0, 7) : ""}`,
+    remaining: b.amount - b.amount_paid,
+  }));
+}
+
 export async function getActiveStudentsForSelect() {
   const supabase = createClient();
   const { data } = await supabase

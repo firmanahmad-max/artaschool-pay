@@ -1,6 +1,8 @@
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, GraduationCap } from "lucide-react";
 import type { Metadata } from "next";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatTanggal } from "@/lib/utils";
@@ -18,11 +20,21 @@ export default async function TahunAjaranPage() {
       <h1 className="text-xl font-semibold">Tahun Ajaran</h1>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Tambah tahun ajaran</CardTitle>
-          <CardDescription>
-            Wizard naik kelas otomatis saat aktivasi hadir di v2 (PRD §9).
-          </CardDescription>
+        <CardHeader className="flex-row items-start justify-between space-y-0">
+          <div>
+            <CardTitle className="text-base">Tambah tahun ajaran</CardTitle>
+            <CardDescription>
+              Setelah tahun ajaran baru dibuat, gunakan Wizard Naik Kelas untuk
+              memindahkan siswa secara massal.
+            </CardDescription>
+          </div>
+          <Link
+            href="/admin/tahun-ajaran/naik-kelas"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          >
+            <GraduationCap className="h-4 w-4" aria-hidden />
+            Wizard Naik Kelas
+          </Link>
         </CardHeader>
         <CardContent>
           <YearForm />

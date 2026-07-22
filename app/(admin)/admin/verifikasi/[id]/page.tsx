@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { AlertTriangle, ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -40,6 +40,23 @@ export default async function PeriksaPembayaranPage({
         </h1>
         <StatusBadge status={detail.status as PaymentStatus} />
       </div>
+
+      {detail.duplicate && (
+        <p className="flex flex-wrap items-center gap-2 rounded-md bg-amber-100 px-4 py-3 text-sm text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+          <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
+          <span>
+            <span className="font-medium">Bukti ganda terdeteksi.</span> Berkas
+            identik pernah dikirim untuk{" "}
+            <span className="font-medium">{detail.duplicate.studentName}</span>.
+          </span>
+          <Link
+            href={`/admin/verifikasi/${detail.duplicate.id}`}
+            className="underline underline-offset-4"
+          >
+            Lihat pembayaran itu
+          </Link>
+        </p>
+      )}
 
       <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
         <div className="space-y-6">
