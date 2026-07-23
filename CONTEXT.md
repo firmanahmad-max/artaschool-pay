@@ -141,6 +141,33 @@ Acuan untuk development lokal (Claude Code / manual). Sumber kebenaran produk: `
 - ⚠️ pentest kini mandiri (membuat pembayaran uji sendiri bila belum ada), tahan
   terhadap `db reset`
 
+## PWA offline-aware (23 Jul 2026) — celah MVP yang tertinggal
+Aplikasi disebut "PWA" sepanjang PRD & kode, tetapi **tidak ada manifest, service
+worker, ikon, bahkan folder `public`** — tidak bisa dipasang ke layar utama dan
+nol kemampuan offline. Ditutup sekarang (PRD §7.1.6):
+- `app/manifest.ts`: installable, `start_url=/beranda`, standalone, id-ID,
+  shortcut Upload & Riwayat; warna selaras token tema
+- Ikon dibuat `scripts/generate-icons.mjs` — encoder PNG minimal (zlib bawaan
+  Node), tanpa dependensi grafis: 192/512/maskable-512/apple-touch
+- `public/sw.js`: aset build cache-first; halaman ortu network-first (segar dulu,
+  cache hanya saat offline); fallback `/offline`
+- **Keamanan cache** (ini aplikasi keuangan): API, `/admin`, dan signed URL bukti
+  (`?token=`) TIDAK PERNAH di-cache; cache halaman DIHAPUS saat logout — ponsel
+  keluarga sering dipakai bergantian
+- Verifikasi nyata dengan **dev server dimatikan** (jaringan mati sungguhan):
+  `/riwayat` tersaji dari cache lengkap dgn datanya; `/upload` (sengaja tak
+  di-cache) jatuh ke halaman offline; uji negatif menunjukkan 0 entri API/admin/
+  signed-URL; logout menghapus `/riwayat` & `/akun` dari perangkat
+- 🐞 2 masalah tertangkap saat verifikasi: (a) pembersihan cache saat logout ikut
+  membuang halaman `/offline` yang hanya dipasang saat `install` → dipasang ulang
+  setelah bersih-bersih; (b) precache yang gagal membatalkan seluruh instalasi SW
+  → dibuat tahan-gagal + pemulihan saat `activate`
+- ⚠️ **Jujur soal batasnya**: PRD menyebut "upload saat offline masuk antrean dan
+  terkirim ketika online". Background Sync tidak didukung Safari/iOS, sehingga
+  janji itu tidak bisa ditepati lintas perangkat. Alih-alih menjanjikannya, kami
+  menampilkan indikator koneksi yang jelas. Bila fitur ini tetap diinginkan,
+  perlu keputusan produk (mis. terbatas Android saja)
+
 ## Sisa sebelum Go-Live (bukan kode)
 - **UAT lapangan oleh sekolah pilot** — butuh sekolah, admin, dan wali sungguhan;
   ikuti `docs/UAT-SEKOLAH-PILOT.md`. Gladi resik teknis + seluruh jalur kritis

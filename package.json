@@ -15,7 +15,8 @@
     "pentest": "node scripts/pentest.mjs",
     "backup:drill": "node scripts/backup-drill.mjs",
     "uat": "node scripts/uat-cycle.mjs",
-    "bootstrap:sekolah": "node scripts/bootstrap-sekolah.mjs"
+    "bootstrap:sekolah": "node scripts/bootstrap-sekolah.mjs",
+    "gen:icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",

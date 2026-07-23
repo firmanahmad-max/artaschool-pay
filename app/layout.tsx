@@ -12,11 +12,28 @@ export const metadata: Metadata = {
   },
   description:
     "Administrasi pembayaran sekolah yang cepat, transparan & modern.",
+  manifest: "/manifest.webmanifest",
+  // iOS belum sepenuhnya membaca manifest — butuh meta khusus agar bisa
+  // dipasang ke layar utama dan tampil tanpa bilah browser.
+  appleWebApp: {
+    capable: true,
+    title: "ArtaSchool",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // Aman untuk ponsel berponi saat berjalan mode standalone
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
