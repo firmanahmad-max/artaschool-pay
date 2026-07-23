@@ -16,7 +16,8 @@
     "backup:drill": "node scripts/backup-drill.mjs",
     "uat": "node scripts/uat-cycle.mjs",
     "bootstrap:sekolah": "node scripts/bootstrap-sekolah.mjs",
-    "gen:icons": "node scripts/generate-icons.mjs"
+    "gen:icons": "node scripts/generate-icons.mjs",
+    "audit:kontras": "node scripts/audit-kontras.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",

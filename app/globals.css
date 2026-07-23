@@ -10,7 +10,12 @@
   --background: #f7f7fb;
   --surface: #ffffff;
   --foreground: #0f172a;
-  --muted-foreground: #64748b;
+  /* PRD §7.4 menyebut #64748B, tetapi nilai itu hanya 4.45:1 di atas
+     --background — di bawah ambang WCAG AA 4.5:1 yang diwajibkan PRD §8
+     (risiko yang justru ditandai PRD §2.2). Digelapkan ke slate-600:
+     7.09:1 di atas background, 7.58:1 di atas surface. Sekaligus menaikkan
+     badge "Dibatalkan" (teks muted di atas border) dari 3.86:1 → 6.15:1. */
+  --muted-foreground: #475569;
   --border: #e2e8f0;
   --primary: #4f46e5;
   --primary-foreground: #ffffff;

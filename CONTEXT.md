@@ -168,6 +168,27 @@ nol kemampuan offline. Ditutup sekarang (PRD §7.1.6):
   menampilkan indikator koneksi yang jelas. Bila fitur ini tetap diinginkan,
   perlu keputusan produk (mis. terbatas Android saja)
 
+## Audit kontras WCAG AA (23 Jul 2026) — risiko PRD §2.2 akhirnya diukur
+PRD §2.2 menandai "kontras badge status perlu diuji WCAG AA" dan §8 mewajibkan
+AA, tetapi kontras tidak pernah benar-benar diukur. Diaudit sekarang:
+- `npm run audit:kontras` (`scripts/audit-kontras.mjs`) — menghitung rasio WCAG
+  untuk 33 pasangan warna yang benar-benar dipakai komponen, di KEDUA tema.
+  Badge dark-mode berlatar transparan (`amber-500/15`) dikomposit dulu di atas
+  `--surface` sebelum diukur, bukan diperkirakan
+- **2 pelanggaran AA nyata ditemukan** (terang):
+  - `--muted-foreground` #64748B di atas `--background` = **4.45:1** (butuh 4.5).
+    Serius karena `text-muted-foreground` dipakai di hampir seluruh aplikasi
+  - badge tagihan "Dibatalkan" (muted di atas border) = **3.86:1**
+- Perbaikan: `--muted-foreground` terang digelapkan ke slate-600 `#475569`
+  → 7.09:1 di background, 7.58:1 di surface; badge "Dibatalkan" ikut naik ke
+  6.15:1. Satu perubahan menutup keduanya. Token gelap tidak berubah (sudah AA)
+- Hasil akhir: **33/33 lulus**; terverifikasi hidup di browser (tema terang
+  memakai `rgb(71,85,105)` di atas `rgb(247,247,251)`)
+- ⚠️ **Menyimpang dari PRD §7.4** yang menuliskan `--muted-foreground` Light =
+  `#64748B`. Nilai itu gagal AA, sedangkan §8 mewajibkan AA — kepatuhan
+  aksesibilitas dimenangkan. **PRD belum saya ubah**; putuskan apakah tabel
+  token di §7.4 mau disesuaikan
+
 ## Sisa sebelum Go-Live (bukan kode)
 - **UAT lapangan oleh sekolah pilot** — butuh sekolah, admin, dan wali sungguhan;
   ikuti `docs/UAT-SEKOLAH-PILOT.md`. Gladi resik teknis + seluruh jalur kritis
