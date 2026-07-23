@@ -46,4 +46,8 @@ export default withSentryConfig(nextConfig, {
     deleteSourcemapsAfterUpload: true,
   },
   disableLogger: true,
+  // SDK Sentry sisi browser SENGAJA tidak dipakai: +62 KB pada tiap muatan
+  // halaman membuat rute orang tua melewati ambang NFR PRD §8 (<150 KB gz,
+  // LCP <2,5 dtk di 3G). Galat render dilaporkan lewat /api/lapor-galat.
+  disableClientWebpackPlugin: true,
 });

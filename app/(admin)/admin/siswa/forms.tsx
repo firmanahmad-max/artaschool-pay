@@ -58,6 +58,18 @@ export function ClassForm() {
 
 export function StudentForm({ classes }: { classes: ClassOption[] }) {
   const [state, action] = useFormState(createStudent, null);
+
+  // Hari pertama tahun ajaran: belum ada kelas sama sekali. Tanpa penjelasan,
+  // admin bingung kenapa siswa tidak bisa disimpan (PRD §2.2).
+  if (classes.length === 0) {
+    return (
+      <p className="rounded-md bg-amber-100 px-3 py-2 text-sm text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+        Buat minimal satu kelas terlebih dahulu — siswa harus ditempatkan ke
+        sebuah kelas saat ditambahkan.
+      </p>
+    );
+  }
+
   return (
     <form action={action} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-3">

@@ -11,6 +11,8 @@
  */
 /** Origin ingest Sentry, diturunkan dari DSN. Kosong bila Sentry mati. */
 function originSentry(): string {
+  // Klien tidak lagi mengirim langsung ke Sentry (lihat /api/lapor-galat),
+  // jadi connect-src tidak perlu dibuka. Disisakan bila kelak diaktifkan.
   const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
   if (!dsn) return "";
   try {

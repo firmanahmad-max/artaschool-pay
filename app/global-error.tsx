@@ -1,6 +1,5 @@
 "use client";
 
-import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 
 /**
@@ -19,8 +18,21 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Penyaring UU PDP tetap berlaku (lihat sentry.client.config.ts)
-    Sentry.captureException(error);
+    // Dilaporkan lewat server (bukan SDK browser) agar bundel tetap ringan
+    // untuk orang tua di jaringan 3G — lihat app/api/lapor-galat/route.ts.
+    // Penyaringan UU PDP dilakukan di sisi server.
+    void fetch("/api/lapor-galat", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        pesan: error.message,
+        jejak: error.stack,
+        jalur: typeof location !== "undefined" ? location.pathname : undefined,
+      }),
+      keepalive: true,
+    }).catch(() => {
+      // gagal melapor tidak boleh memperburuk keadaan pengguna
+    });
   }, [error]);
 
   return (

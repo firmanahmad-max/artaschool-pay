@@ -210,7 +210,29 @@ tidak ada kode yang memakainya: error produksi sepenuhnya tak terlihat. Ditutup:
   berbahasa Indonesia (sebelumnya layar kosong, tanpa laporan)
 - Source map: **tidak dihasilkan** bila tak ada `SENTRY_AUTH_TOKEN`, dan dihapus
   dari bundel bila diunggah — terverifikasi 0 berkas `.map` di `.next/static`
-- CSP `connect-src` membuka origin Sentry **hanya** bila DSN terisi
+- 🔴 **SDK Sentry sisi browser DIKELUARKAN dari bundel** — regresi NFR nyata:
+  memasangnya menaikkan First Load JS bersama 87 → **149 kB**, membuat setiap
+  rute orang tua **152–161 kB**, melewati ambang PRD §8 (<150 KB gz, LCP <2,5
+  dtk di 3G). Pengguna kita orang tua berkoneksi seadanya, jadi beban itu tidak
+  sepadan. Sekarang: `disableClientWebpackPlugin`, galat render dilaporkan
+  lewat `POST /api/lapor-galat` (disaring UU PDP di server). Hasil: bersama
+  **87,8 kB**, rute ortu **97–106 kB** — kembali di bawah ambang, monitoring
+  server (jalur pembayaran) tetap utuh
+- Endpoint pelaporan teruji dua keadaan: tanpa DSN → diterima & tidak
+  diteruskan (nol kerja); dengan DSN → diteruskan, payload rusak → 400
+
+## Jaring pengaman kini dijalankan CI (23 Jul 2026)
+`test:scrub` & `audit:kontras` tidak butuh database, tetapi sebelumnya hanya
+jalan bila ada yang ingat. Kini jadi job CI tersendiri — perubahan yang merusak
+penyaringan UU PDP atau kontras AA akan menggagalkan build.
+**Dibuktikan menangkap regresi** (bukan sekadar dipasang): mengembalikan
+`--muted-foreground` ke nilai PRD → audit gagal; menghapus pola nomor HP dari
+penyaring → uji gagal dengan menyebut kebocorannya satu per satu.
+
+Empty state (PRD §2.2) diaudit menyeluruh: seluruh daftar/tabel sudah memiliki
+keadaan kosong. Satu celah ditambal — form tambah siswa saat **belum ada kelas
+sama sekali** (hari pertama tahun ajaran) kini memberi arahan, bukan dropdown
+kosong yang membingungkan.
 
 ## Sisa sebelum Go-Live (bukan kode)
 - **UAT lapangan oleh sekolah pilot** — butuh sekolah, admin, dan wali sungguhan;
