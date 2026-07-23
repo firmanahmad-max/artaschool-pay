@@ -260,6 +260,26 @@ membuat tagihan lunas tanpa uang masuk, dan tak ada yang menahan.
   Kini berkas tes yang SAMA lulus di stub CI **dan** Supabase lokal sungguhan
   (`npm run test:rpc`)
 
+## Gateway WA disamakan dengan API Fonnte sungguhan (23 Jul 2026)
+Saat memandu penyiapan kredensial WA, saya verifikasi kode gateway ke dokumentasi
+Fonnte resmi dan menemukan **dua bug yang hanya muncul di produksi**:
+- 🔴 **Kegagalan tercatat sebagai terkirim.** Fonnte SELALU membalas HTTP 200,
+  bahkan saat gagal (token salah, device terputus, kuota habis) — sukses/gagal
+  ada di field `status` pada body. Kode lama hanya cek `res.ok`, jadi notifikasi
+  yang tak pernah sampai (termasuk OTP login!) akan ditandai `sent` dan monitor
+  admin tampak hijau. Kini membaca `status`; `status:false` → dead-letter dgn
+  alasan dari Fonnte
+- Body dikirim JSON, padahal Fonnte butuh **form** (`x-www-form-urlencoded`) —
+  diperbaiki
+- Logika interpretasi diekstrak jadi fungsi murni `modules/notifications/
+  fonnte-parse.ts`, diuji `npm run test:gateway` (**9/9**, memakai bentuk respons
+  nyata dari dokumentasi Fonnte) — kini job CI privasi/aksesibilitas
+- `scripts/cek-wa-gateway.mjs` (`node scripts/cek-wa-gateway.mjs "+62812…"`):
+  kirim 1 pesan uji nyata, terjemahkan respons jadi diagnosa (token/device/
+  kuota/format). Teruji lawan mock Fonnte: sukss→✓, HTTP200+status:false→✗
+- Panduan lengkap: `docs/SETUP-GATEWAY-WA.md` (daftar Fonnte → sambung device →
+  token → env → uji → sambung OTP hook)
+
 ## Sisa sebelum Go-Live (bukan kode)
 - **UAT lapangan oleh sekolah pilot** — butuh sekolah, admin, dan wali sungguhan;
   ikuti `docs/UAT-SEKOLAH-PILOT.md`. Gladi resik teknis + seluruh jalur kritis
