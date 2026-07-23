@@ -123,10 +123,31 @@ Acuan untuk development lokal (Claude Code / manual). Sumber kebenaran produk: `
 - ⚠️ Catatan: nomor OTP uji UAT ditambahkan ke `config.toml` (`[auth.sms.test_otp]`) —
   hanya berlaku lokal, tidak berpengaruh di produksi
 
+## Auth hook OTP (22 Jul 2026) — jalur kritis terakhir
+- ✅ `POST /api/hooks/send-sms`: auth hook `send_sms` Supabase → meneruskan OTP
+  login orang tua ke gateway WhatsApp. Inilah jembatan yang membuat OTP WA
+  benar-benar terkirim di produksi (sebelumnya lokal hanya pakai test_otp)
+  - Verifikasi tanda tangan Standard Webhooks (timing-safe); teruji 4 kasus:
+    valid→200, palsu/kosong/body-dirusak→401
+  - Diaktifkan di `config.toml` `[auth.hook.send_sms]` (kunci `secrets`, bukan
+    `secret`; uri `host.docker.internal:3000`). Perlu **recreate container auth**
+    (bukan sekadar restart) agar env hook termuat — `supabase start` memakai ulang
+    container lama; paksa dgn `docker rm -f` container proyek lalu start
+  - **Teruji end-to-end**: Supabase memanggil hook dgn OTP asli; bentuk payload
+    `{ user.phone, sms.otp }` terkonfirmasi benar; nomor `test_otp` tetap
+    didahulukan (login uji & UAT tak terpengaruh)
+  - Produksi: isi `SEND_SMS_HOOK_SECRET` + `WA_GATEWAY_URL/TOKEN`; tanpa gateway
+    OTP hanya masuk log dry-run dan orang tua tak bisa login
+- ⚠️ pentest kini mandiri (membuat pembayaran uji sendiri bila belum ada), tahan
+  terhadap `db reset`
+
 ## Sisa sebelum Go-Live (bukan kode)
 - **UAT lapangan oleh sekolah pilot** — butuh sekolah, admin, dan wali sungguhan;
-  ikuti `docs/UAT-SEKOLAH-PILOT.md`. Gladi resik teknis sudah lulus, tetapi
-  keterpakaian oleh orang tua sungguhan hanya bisa dibuktikan di lapangan
+  ikuti `docs/UAT-SEKOLAH-PILOT.md`. Gladi resik teknis + seluruh jalur kritis
+  (termasuk hook OTP) sudah lulus; keterpakaian oleh orang tua sungguhan hanya
+  bisa dibuktikan di lapangan
+- Kredensial produksi: gateway WA (Fonnte/Wablas), `SEND_SMS_HOOK_SECRET`, OCR
+  Sumopod (opsional), PITR + MFA di Supabase Cloud
 - Isi `WA_GATEWAY_URL`/`WA_GATEWAY_TOKEN` (Fonnte/Wablas) — tanpa itu notifikasi jalan mode dry-run
 - 2FA TOTP untuk `super_admin` & `admin_keuangan` (PRD §6.1) — dijadwalkan v2
 - Aktifkan PITR + jadwal export terenkripsi di Supabase Cloud

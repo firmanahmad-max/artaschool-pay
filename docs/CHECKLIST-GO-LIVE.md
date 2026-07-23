@@ -27,8 +27,13 @@ Harus selesai **sebelum** sekolah pilot mulai [UAT](./UAT-SEKOLAH-PILOT.md).
 
 ## 3. OTP login orang tua
 
-- [ ] Sambungkan pengiriman OTP ke gateway WA (auth hook `send_sms`), **atau**
-      sementara pakai penyedia SMS
+- [ ] Aktifkan auth hook `send_sms` di Supabase → arahkan ke
+      `https://APLIKASI/api/hooks/send-sms` (endpoint sudah ada)
+- [ ] Buat secret hook di Supabase (format `v1,whsec_<base64>`), salin ke
+      env `SEND_SMS_HOOK_SECRET` aplikasi — endpoint memverifikasi tanda tangan
+      Standard Webhooks dan menolak yang tidak sah
+- [ ] Pastikan `WA_GATEWAY_URL`/`TOKEN` terisi (hook meneruskan OTP ke gateway;
+      tanpa itu OTP hanya masuk log dry-run dan **orang tua tak bisa login**)
 - [ ] Uji OTP ke minimal 3 nomor berbeda operator (Telkomsel/XL/Indosat)
 - [ ] Pastikan kode masuk < 1 menit
 

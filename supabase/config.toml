@@ -293,6 +293,14 @@ max_frequency = "5s"
 # enabled = true
 # uri = "pg-functions://<database>/<schema>/<hook_name>"
 
+# Kirim OTP login orang tua lewat gateway WhatsApp (PRD §6.1). Nomor di
+# [auth.sms.test_otp] tetap memakai kode tetap tanpa memanggil hook.
+# uri memakai host.docker.internal agar container auth bisa mencapai dev server.
+[auth.hook.send_sms]
+enabled = true
+uri = "http://host.docker.internal:3000/api/hooks/send-sms"
+secrets = "env(SEND_SMS_HOOK_SECRET)"
+
 # Configure one of the supported SMS providers: `twilio`, `twilio_verify`, `messagebird`, `textlocal`, `vonage`.
 [auth.sms.twilio]
 # LOKAL SAJA: kredensial dummy agar phone login aktif; nomor di
