@@ -9,9 +9,21 @@
  * inline untuk CSS-in-JS dan optimasi font. Risikonya jauh lebih rendah
  * daripada script-src dan tidak bisa dihindari tanpa mematikan fitur tsb.
  */
+/** Origin ingest Sentry, diturunkan dari DSN. Kosong bila Sentry mati. */
+function originSentry(): string {
+  const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+  if (!dsn) return "";
+  try {
+    return new URL(dsn).origin;
+  } catch {
+    return "";
+  }
+}
+
 export function buildCsp(nonce: string, isDev: boolean): string {
   const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const supabaseWs = supabase ? supabase.replace(/^http/, "ws") : "";
+  const sentry = originSentry();
 
   return [
     "default-src 'self'",
@@ -20,7 +32,7 @@ export function buildCsp(nonce: string, isDev: boolean): string {
     "style-src 'self' 'unsafe-inline'",
     `img-src 'self' data: blob:${supabase ? ` ${supabase}` : ""}`,
     "font-src 'self' data:",
-    `connect-src 'self'${supabase ? ` ${supabase} ${supabaseWs}` : ""}`,
+    `connect-src 'self'${supabase ? ` ${supabase} ${supabaseWs}` : ""}${sentry ? ` ${sentry}` : ""}`,
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",

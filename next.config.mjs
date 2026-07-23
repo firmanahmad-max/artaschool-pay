@@ -1,3 +1,5 @@
+import { withSentryConfig } from "@sentry/nextjs";
+
 /**
  * Header keamanan statis. CSP TIDAK di sini — dibangun per-request dengan
  * nonce di `middleware.ts` (lihat `lib/csp.ts`), karena nonce harus berbeda
@@ -18,9 +20,30 @@ const securityHeaders = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  experimental: {
+    // dibutuhkan instrumentation.ts di Next.js 14
+    instrumentationHook: true,
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
 };
 
-export default nextConfig;
+// Tanpa SENTRY_DSN, Sentry tidak diinisialisasi (lihat sentry.*.config.ts).
+// Pembungkus tetap dipasang agar build konsisten di kedua keadaan.
+const unggahSourceMap = Boolean(process.env.SENTRY_AUTH_TOKEN);
+
+export default withSentryConfig(nextConfig, {
+  silent: true,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  sourcemaps: {
+    // Tanpa token unggah, source map tidak ada gunanya — dan menyajikannya
+    // ke publik membocorkan kode server aplikasi keuangan ini.
+    disable: !unggahSourceMap,
+    // Bila diunggah, hapus dari bundel agar tidak ikut tersaji.
+    deleteSourcemapsAfterUpload: true,
+  },
+  disableLogger: true,
+});

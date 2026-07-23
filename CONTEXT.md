@@ -189,6 +189,29 @@ AA, tetapi kontras tidak pernah benar-benar diukur. Diaudit sekarang:
   aksesibilitas dimenangkan. **PRD belum saya ubah**; putuskan apakah tabel
   token di §7.4 mau disesuaikan
 
+## Monitoring Sentry (23 Jul 2026) — celah operasional terakhir
+`SENTRY_DSN` ada di env sejak Sprint 1 dan PRD §3.2 mencantumkan Sentry, tetapi
+tidak ada kode yang memakainya: error produksi sepenuhnya tak terlihat. Ditutup:
+- `@sentry/nextjs` v8 + `instrumentation.ts` (server & edge) + config klien.
+  **Tanpa DSN, Sentry tidak diinisialisasi sama sekali** — terverifikasi:
+  `window.__SENTRY__` ada tapi client null, nol permintaan jaringan
+- **Penyaring UU PDP (`lib/sentry-scrub.ts`)** — ini bagian terpentingnya.
+  Laporan error mudah membocorkan nomor HP wali, NIS, nama siswa, nominal,
+  path bukti, JWT. Semua disamarkan SEBELUM meninggalkan server:
+  - pola teks bebas (nomor HP 08/+62, email, JWT, token signed URL, path bukti)
+  - kunci sensitif dibuang total (`phone`, `nis`, `full_name`, `amount`,
+    `proof_path`, `review_note`, `authorization`, `cookie`, dst.)
+  - `user`, `cookies`, `headers`, `request.data` dibuang dari event
+  - `sendDefaultPii: false`; **Session Replay sengaja TIDAK dipakai** (layar
+    ortu memuat nama anak, nominal, dan bukti transfer)
+  - `npm run test:scrub` — **16/16 lulus**, memakai skenario kebocoran nyata
+    aplikasi ini; termasuk uji bahwa pesan diagnostik tetap terbaca
+- `app/global-error.tsx`: crash render React kini terlaporkan + halaman ramah
+  berbahasa Indonesia (sebelumnya layar kosong, tanpa laporan)
+- Source map: **tidak dihasilkan** bila tak ada `SENTRY_AUTH_TOKEN`, dan dihapus
+  dari bundel bila diunggah — terverifikasi 0 berkas `.map` di `.next/static`
+- CSP `connect-src` membuka origin Sentry **hanya** bila DSN terisi
+
 ## Sisa sebelum Go-Live (bukan kode)
 - **UAT lapangan oleh sekolah pilot** — butuh sekolah, admin, dan wali sungguhan;
   ikuti `docs/UAT-SEKOLAH-PILOT.md`. Gladi resik teknis + seluruh jalur kritis

@@ -55,6 +55,20 @@ Harus selesai **sebelum** sekolah pilot mulai [UAT](./UAT-SEKOLAH-PILOT.md).
 - [ ] **Setiap admin wajib mengaktifkan 2FA** saat login pertama
       (super admin & admin keuangan diblokir sampai aktif)
 
+## 5b. Monitoring (Sentry)
+
+- [ ] Buat project Sentry, salin DSN
+- [ ] Isi `SENTRY_DSN` (server) & `NEXT_PUBLIC_SENTRY_DSN` (browser)
+- [ ] Opsional untuk stack trace terbaca: `SENTRY_ORG`, `SENTRY_PROJECT`,
+      `SENTRY_AUTH_TOKEN` (source map diunggah lalu dihapus dari bundel)
+- [ ] Verifikasi laporan masuk: picu error uji, cek muncul di Sentry
+- [ ] **Periksa laporan pertama secara manual**: pastikan tidak ada nomor HP,
+      NIS, nama siswa, nominal, atau path bukti yang lolos — penyaring UU PDP
+      ada di `lib/sentry-scrub.ts`, jalankan `npm run test:scrub` bila diubah
+
+> Tanpa DSN, Sentry mati total (tidak ada koneksi keluar) dan aplikasi tetap
+> berjalan normal — tetapi error produksi menjadi tidak terlihat.
+
 ## 6. Verifikasi keamanan
 
 - [ ] `npm run pentest` → **21/21 lulus**

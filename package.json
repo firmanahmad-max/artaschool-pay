@@ -17,9 +17,11 @@
     "uat": "node scripts/uat-cycle.mjs",
     "bootstrap:sekolah": "node scripts/bootstrap-sekolah.mjs",
     "gen:icons": "node scripts/generate-icons.mjs",
-    "audit:kontras": "node scripts/audit-kontras.mjs"
+    "audit:kontras": "node scripts/audit-kontras.mjs",
+    "test:scrub": "node scripts/test-scrub.mjs"
   },
   "dependencies": {
+    "@sentry/nextjs": "^8.55.2",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.7",
     "@tanstack/react-query": "^5.59.0",
