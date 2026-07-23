@@ -234,6 +234,32 @@ keadaan kosong. Satu celah ditambal — form tambah siswa saat **belum ada kelas
 sama sekali** (hari pertama tahun ajaran) kini memberi arahan, bukan dropdown
 kosong yang membingungkan.
 
+## Tes logika keuangan di CI (23 Jul 2026) — celah terbesar yang tersisa
+Sebelum ini CI hanya memastikan migration BISA dijalankan, bukan bahwa aturan
+uangnya MASIH benar. Satu perubahan ceroboh pada `approve_payment` sudah cukup
+membuat tagihan lunas tanpa uang masuk, dan tak ada yang menahan.
+- `supabase/tests/rpc_test.sql` — **31 asersi**, 10 kelompok: keseimbangan
+  alokasi, penegakan 2FA di RPC uang, catatan wajib, idempotensi
+  `generate_bills`, perlindungan `waive_bill`, audit append-only, batas
+  kepemilikan anak pada `submit_payment`, deteksi bukti ganda, wizard naik
+  kelas (termasuk kelulusan tingkat 6), dan batas peran (operator/viewer)
+- Dijalankan CI setelah migrations + seed (job "Validasi skema PostgreSQL 16")
+- **Dibuktikan menangkap regresi**, bukan sekadar ada:
+  - menghapus pemeriksaan keseimbangan alokasi → `GAGAL [alokasi kurang dari
+    nominal]: seharusnya DITOLAK, tetapi berhasil`
+  - membuat `admin_mfa_ok()` selalu true → `GAGAL [approve pada aal1]`
+- 🐞 Dua cacat pada tes SAYA SENDIRI, tertangkap karena tesnya ikut diuji:
+  - tidak idempotent (data tertinggal → bentrok kunci unik saat dijalankan
+    ulang, kegagalan palsu yang menyamarkan regresi asli) → seluruh berkas
+    kini satu transaksi yang selalu `rollback`
+  - memakai `schools limit 1`, sehingga entitas uji tercecer antar-sekolah
+    pada basis data multi-tenant → semua ditambatkan ke `uji.sekolah()`
+- 🔍 **Stub auth CI disamakan dengan Supabase asli**: sebelumnya stub membaca
+  `request.jwt.claim.aal` per-kunci padahal produksi membaca objek JSON
+  `request.jwt.claims` — tes bisa lulus di CI padahal perilaku nyatanya lain.
+  Kini berkas tes yang SAMA lulus di stub CI **dan** Supabase lokal sungguhan
+  (`npm run test:rpc`)
+
 ## Sisa sebelum Go-Live (bukan kode)
 - **UAT lapangan oleh sekolah pilot** — butuh sekolah, admin, dan wali sungguhan;
   ikuti `docs/UAT-SEKOLAH-PILOT.md`. Gladi resik teknis + seluruh jalur kritis

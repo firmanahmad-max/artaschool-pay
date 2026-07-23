@@ -68,6 +68,8 @@ jobs:
           done
       - name: Jalankan seed
         run: psql -h localhost -U postgres -d artaschool -v ON_ERROR_STOP=1 -f supabase/seed.sql
+      - name: Tes logika keuangan (RPC, trigger, batas peran)
+        run: psql -h localhost -U postgres -d artaschool -v ON_ERROR_STOP=1 -f supabase/tests/rpc_test.sql
       - name: Pastikan proteksi kritis terpasang
         run: |
           psql -h localhost -U postgres -d artaschool -v ON_ERROR_STOP=1 -c "

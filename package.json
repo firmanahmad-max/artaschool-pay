@@ -18,7 +18,8 @@
     "bootstrap:sekolah": "node scripts/bootstrap-sekolah.mjs",
     "gen:icons": "node scripts/generate-icons.mjs",
     "audit:kontras": "node scripts/audit-kontras.mjs",
-    "test:scrub": "node scripts/test-scrub.mjs"
+    "test:scrub": "node scripts/test-scrub.mjs",
+    "test:rpc": "docker exec supabase_db_ArtaSchool_Pay psql -U postgres -d postgres -v ON_ERROR_STOP=1 -f /dev/stdin < supabase/tests/rpc_test.sql"
   },
   "dependencies": {
     "@sentry/nextjs": "^8.55.2",
