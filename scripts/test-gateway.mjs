@@ -1,20 +1,22 @@
 /**
- * Uji interpretasi respons Fonnte (npm run test:gateway).
+ * Uji interpretasi respons WAHA (npm run test:gateway).
  *
- * Skenario memakai bentuk respons NYATA dari dokumentasi Fonnte. Yang paling
- * penting: "status:false pada HTTP 200" harus dianggap GAGAL — inilah bug yang
- * bisa membuat notifikasi yang tak pernah sampai tercatat sebagai terkirim.
+ * WAHA memakai kode HTTP yang benar — berbeda dari Fonnte yang selalu 200.
+ * Yang diuji: 2xx→terkirim, 422→sesi belum siap, 401→api-key salah, 5xx→ulangi,
+ * plus konversi nomor → chatId.
  */
 import { readFileSync, writeFileSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { transpileModule, ModuleKind } from "typescript";
 
-const ts = readFileSync("modules/notifications/fonnte-parse.ts", "utf8");
+const ts = readFileSync("modules/notifications/waha-parse.ts", "utf8");
 const js = transpileModule(ts, { compilerOptions: { module: ModuleKind.ESNext } }).outputText;
-const file = join(mkdtempSync(join(tmpdir(), "fonnte-")), "p.mjs");
+const file = join(mkdtempSync(join(tmpdir(), "waha-")), "p.mjs");
 writeFileSync(file, js);
-const { interpretasiFonnte } = await import("file://" + file.replace(/\\/g, "/"));
+const { interpretasiWaha, keChatId, endpointKirim } = await import(
+  "file://" + file.replace(/\\/g, "/")
+);
 
 let lulus = 0;
 const gagal = [];
@@ -23,42 +25,49 @@ function cek(nama, kondisi, detail = "") {
   else { gagal.push(nama); console.log(`  GAGAL ${nama} ${detail}`); }
 }
 
-console.log("\n=== Uji interpretasi respons Fonnte ===\n");
+console.log("\n=== Uji interpretasi respons WAHA ===\n");
 
-// Sukses: message in queue (respons nyata dari dokumentasi)
-const sukses = interpretasiFonnte(200, JSON.stringify({
-  detail: "success! message in queue", id: ["80367170"], process: "pending",
-  requestid: 2937124, status: true, target: ["6282227097005"],
+// Sukses: 201 Created dengan objek pesan
+const sukses = interpretasiWaha(201, JSON.stringify({ id: "true_628..@c.us_3EB0", _data: {} }));
+cek("HTTP 201 → terkirim", sukses.ok === true);
+
+const sukses200 = interpretasiWaha(200, JSON.stringify({ id: "abc" }));
+cek("HTTP 200 → terkirim", sukses200.ok === true);
+
+// 422: sesi belum WORKING (respons NestJS nyata WAHA)
+const sesi = interpretasiWaha(422, JSON.stringify({
+  statusCode: 422,
+  message: "Session status is not as expected. Try again later or restart the session. Status: STOPPED. Expected: WORKING",
+  error: "Unprocessable Entity",
 }));
-cek("status:true → terkirim", sukses.ok === true);
+cek("HTTP 422 → GAGAL (sesi belum siap)", sesi.ok === false);
+cek("  pesan sesi diteruskan", String(sesi.error).includes("WORKING"));
+cek("  422 layak diulang (sesi bisa pulih)", sesi.ulangi === true);
 
-// JEBAKAN UTAMA: HTTP 200 tapi status:false (token salah)
-const tokenSalah = interpretasiFonnte(200, JSON.stringify({
-  status: false, reason: "token invalid", requestid: 2937124,
+// 401: X-Api-Key salah
+const auth = interpretasiWaha(401, JSON.stringify({ statusCode: 401, message: "Unauthorized" }));
+cek("HTTP 401 → GAGAL (api-key)", auth.ok === false && String(auth.error).includes("X-Api-Key"));
+
+// message berupa array (validasi NestJS)
+const validasi = interpretasiWaha(400, JSON.stringify({
+  statusCode: 400, message: ["chatId must be a string", "text should not be empty"], error: "Bad Request",
 }));
-cek("HTTP 200 + status:false → GAGAL (bukan terkirim)", tokenSalah.ok === false);
-cek("  alasan gagal diteruskan ke dead-letter", String(tokenSalah.error).includes("token invalid"));
+cek("HTTP 400 array message digabung", validasi.ok === false && String(validasi.error).includes("chatId must be a string"));
 
-// device terputus / kuota habis — juga status:false di HTTP 200
-for (const alasan of ["device disconnected", "insufficient quota", "invalid target"]) {
-  const r = interpretasiFonnte(200, JSON.stringify({ status: false, reason: alasan }));
-  cek(`status:false (${alasan}) → GAGAL`, r.ok === false && String(r.error).includes(alasan));
-}
-
-// 5xx → gagal & layak diulang
-const s5 = interpretasiFonnte(502, "Bad Gateway");
+// 5xx → ulangi
+const s5 = interpretasiWaha(502, "Bad Gateway");
 cek("HTTP 502 → gagal & ulangi", s5.ok === false && s5.ulangi === true);
 
-// body bukan JSON → gagal, tidak menganggapnya sukses
-const rusak = interpretasiFonnte(200, "<html>Maintenance</html>");
-cek("body non-JSON → GAGAL (tidak dikira terkirim)", rusak.ok === false);
+// body non-JSON pada error tetap ditangani
+const nonjson = interpretasiWaha(404, "Cannot POST /api/sendText");
+cek("HTTP 404 body non-JSON → gagal", nonjson.ok === false);
 
-// pesan terjadwal juga sukses
-const terjadwal = interpretasiFonnte(200, JSON.stringify({
-  status: true, detail: "success! message will be sent on scheduled time",
-}));
-cek("pesan terjadwal → terkirim", terjadwal.ok === true);
+console.log("\nKonversi nomor & endpoint:");
+cek('+6281234567890 → 6281234567890@c.us', keChatId("+6281234567890") === "6281234567890@c.us");
+cek("spasi/strip dibersihkan", keChatId("+62 812-3456-7890") === "6281234567890@c.us");
+cek("URL dasar → /api/sendText", endpointKirim("https://waha.contoh.com") === "https://waha.contoh.com/api/sendText");
+cek("trailing slash dirapikan", endpointKirim("https://waha.contoh.com/") === "https://waha.contoh.com/api/sendText");
 
 console.log(`\n=== ${lulus}/${lulus + gagal.length} lulus ===`);
 if (gagal.length) { console.error("GAGAL: " + gagal.join(", ")); process.exit(1); }
-console.log("Interpretasi respons Fonnte benar.\n");
+console.log("Interpretasi respons WAHA benar.\n");

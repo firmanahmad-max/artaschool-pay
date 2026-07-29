@@ -1,11 +1,12 @@
 /**
- * Uji kredensial gateway WhatsApp sungguhan — jalankan SETELAH mengisi
- * WA_GATEWAY_URL & WA_GATEWAY_TOKEN di .env.local.
+ * Uji instance WAHA sungguhan — jalankan SETELAH mengisi WA_GATEWAY_URL &
+ * WA_GATEWAY_TOKEN (dan opsional WA_SESSION) di .env.local.
  *
  *   node scripts/cek-wa-gateway.mjs "+62812xxxxxxxx"
  *
- * Argumen: nomor tujuan uji (biasanya nomor Anda sendiri). Skrip mengirim satu
- * pesan nyata dan menerjemahkan respons Fonnte menjadi diagnosa yang jelas.
+ * 1. Cek status sesi WAHA (masalah tersering: sesi belum di-scan / STOPPED).
+ * 2. Bila WORKING, kirim satu pesan uji nyata ke nomor tujuan.
+ * Respons diterjemahkan menjadi diagnosa yang jelas.
  */
 import { readFileSync, existsSync } from "node:fs";
 
@@ -16,14 +17,16 @@ if (existsSync(".env.local")) {
   }
 }
 
-const url = process.env.WA_GATEWAY_URL;
+const base = (process.env.WA_GATEWAY_URL || "").replace(/\/+$/, "");
 const token = process.env.WA_GATEWAY_TOKEN;
+const session = process.env.WA_SESSION || "default";
 const tujuan = process.argv[2];
 
-if (!url || !token) {
+if (!base || !token) {
   console.error(
     "\nWA_GATEWAY_URL / WA_GATEWAY_TOKEN belum diisi di .env.local.\n" +
-      "Isi dulu keduanya, lalu jalankan ulang.\n",
+      "  WA_GATEWAY_URL   = URL instance WAHA (mis. https://waha.contoh.com)\n" +
+      "  WA_GATEWAY_TOKEN = nilai X-Api-Key\n",
   );
   process.exit(1);
 }
@@ -32,53 +35,67 @@ if (!tujuan || !/^\+?\d{8,15}$/.test(tujuan.replace(/[\s-]/g, ""))) {
   process.exit(1);
 }
 
-const target = tujuan.replace(/[\s-]/g, "").replace(/^\+/, "");
-console.log(`\nMengirim pesan uji ke ${target} lewat ${url} …\n`);
+const H = { "X-Api-Key": token, "Content-Type": "application/json" };
+const chatId = tujuan.replace(/[\s-]/g, "").replace(/^\+/, "") + "@c.us";
 
+// ── 1. Status sesi ──────────────────────────────────────────────────────────
+console.log(`\n[1] Memeriksa sesi "${session}" di ${base} …`);
+let statusSesi;
 try {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { Authorization: token, "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      target,
-      message:
-        "Uji koneksi ArtaSchool Pay. Bila Anda menerima pesan ini, gateway WhatsApp sudah siap.",
-    }).toString(),
-    signal: AbortSignal.timeout(20_000),
-  });
-
-  const teks = await res.text();
-  let data;
-  try {
-    data = JSON.parse(teks);
-  } catch {
-    console.error(`Respons bukan JSON (HTTP ${res.status}):\n${teks.slice(0, 300)}\n`);
-    console.error("→ Periksa apakah WA_GATEWAY_URL benar (harus https://api.fonnte.com/send).");
+  const r = await fetch(`${base}/api/sessions/${session}`, { headers: H, signal: AbortSignal.timeout(15000) });
+  if (r.status === 401 || r.status === 403) {
+    console.error("  ✗ X-Api-Key ditolak. Periksa WA_GATEWAY_TOKEN.\n");
     process.exit(1);
   }
+  if (r.status === 404) {
+    console.error(`  ✗ Sesi "${session}" tidak ada. Buat & start dulu di dashboard WAHA,\n    atau set WA_SESSION ke nama sesi yang benar.\n`);
+    process.exit(1);
+  }
+  const d = await r.json().catch(() => ({}));
+  statusSesi = d.status;
+  console.log(`  status sesi: ${statusSesi ?? "(tak diketahui)"}`);
+  if (statusSesi && statusSesi !== "WORKING") {
+    console.error(
+      `  ✗ Sesi belum siap (butuh WORKING).\n` +
+        (statusSesi === "SCAN_QR_CODE"
+          ? "    → Buka dashboard WAHA dan scan QR dengan WhatsApp nomor gateway.\n"
+          : statusSesi === "STOPPED"
+            ? "    → Start sesi di dashboard WAHA, lalu scan QR bila diminta.\n"
+            : "    → Tunggu sesi tersambung, atau start ulang di dashboard WAHA.\n"),
+    );
+    process.exit(1);
+  }
+} catch (e) {
+  console.error(`  ✗ Gagal menghubungi WAHA: ${e instanceof Error ? e.message : e}`);
+  console.error("    → Periksa WA_GATEWAY_URL dan apakah server WAHA berjalan.\n");
+  process.exit(1);
+}
 
-  if (data.status === true) {
-    console.log("✓ BERHASIL — pesan masuk antrean gateway.");
-    console.log(`  detail : ${data.detail ?? "-"}`);
-    console.log(`  id     : ${JSON.stringify(data.id ?? [])}`);
+// ── 2. Kirim pesan uji ──────────────────────────────────────────────────────
+console.log(`\n[2] Mengirim pesan uji ke ${chatId} …`);
+try {
+  const r = await fetch(`${base}/api/sendText`, {
+    method: "POST",
+    headers: H,
+    body: JSON.stringify({
+      session,
+      chatId,
+      text: "Uji koneksi ArtaSchool Pay. Bila Anda menerima pesan ini, gateway WhatsApp sudah siap.",
+    }),
+    signal: AbortSignal.timeout(20000),
+  });
+  const teks = await r.text();
+  if (r.status >= 200 && r.status < 300) {
+    console.log("  ✓ BERHASIL — WAHA menerima pesan.");
     console.log("\nCek ponsel tujuan. Bila pesan tiba, kredensial siap dipakai produksi.\n");
     process.exit(0);
   }
-
-  console.error(`✗ DITOLAK gateway: ${data.reason ?? data.detail ?? "alasan tak diketahui"}\n`);
-  const petunjuk = {
-    "token invalid": "Token salah/kedaluwarsa. Salin ulang dari dashboard Fonnte → Device.",
-    "invalid target": "Format nomor tujuan salah. Pakai 62… (tanpa + dan tanpa 0 di depan).",
-    "insufficient quota": "Kuota/saldo Fonnte habis. Isi ulang di dashboard.",
-  };
-  const r = String(data.reason ?? "").toLowerCase();
-  for (const [k, v] of Object.entries(petunjuk)) if (r.includes(k)) console.error("→ " + v + "\n");
-  if (r.includes("disconnect") || r.includes("not connected")) {
-    console.error("→ Nomor WhatsApp device belum tersambung. Scan ulang QR di dashboard Fonnte.\n");
-  }
+  let pesan = teks;
+  try { const d = JSON.parse(teks); pesan = Array.isArray(d.message) ? d.message.join("; ") : (d.message ?? d.error ?? teks); } catch { /* biarkan */ }
+  console.error(`  ✗ DITOLAK (HTTP ${r.status}): ${String(pesan).slice(0, 200)}\n`);
+  if (r.status === 422) console.error("    → Sesi tidak lagi WORKING. Scan ulang QR di dashboard WAHA.\n");
   process.exit(1);
 } catch (e) {
-  console.error(`✗ Gagal menghubungi gateway: ${e instanceof Error ? e.message : e}\n`);
-  console.error("→ Periksa koneksi internet dan nilai WA_GATEWAY_URL.\n");
+  console.error(`  ✗ Gagal mengirim: ${e instanceof Error ? e.message : e}\n`);
   process.exit(1);
 }

@@ -1,20 +1,23 @@
 import "server-only";
-import { interpretasiFonnte } from "./fonnte-parse";
+import { endpointKirim, interpretasiWaha, keChatId } from "./waha-parse";
 
 export type SendResult = { ok: true; dryRun: boolean } | { ok: false; error: string };
 
 /**
- * Kirim WhatsApp lewat gateway Fonnte (https://api.fonnte.com/send).
+ * Kirim WhatsApp lewat WAHA (https://waha.devlike.pro) — WhatsApp HTTP API
+ * yang di-hosting sendiri.
+ *
+ * Env:
+ *   WA_GATEWAY_URL   = URL dasar instance WAHA, mis. https://waha.contoh.com
+ *   WA_GATEWAY_TOKEN = nilai header X-Api-Key
+ *   WA_SESSION       = nama sesi WAHA (opsional, default "default")
  *
  * Bila WA_GATEWAY_URL/TOKEN belum diset (dev lokal), jalan mode DRY-RUN:
- * pesan hanya dicetak ke log dan alur tetap bisa diuji tanpa gateway asli.
+ * pesan hanya dicetak ke log dan alur tetap bisa diuji tanpa WAHA asli.
  *
- * DUA HAL PENTING soal API Fonnte, yang sempat salah di versi awal:
- * 1. Body dikirim sebagai FORM (x-www-form-urlencoded), BUKAN JSON.
- * 2. Fonnte selalu membalas HTTP 200 — sukses/gagal ada di field `status`
- *    pada body JSON. Token salah / device terputus / kuota habis tetap
- *    HTTP 200 dengan `status:false`. Karena itu kita WAJIB membaca body;
- *    hanya mengecek `res.ok` akan mencatat kegagalan sebagai terkirim.
+ * Berbeda dari Fonnte, WAHA memakai kode HTTP yang benar (422 = sesi belum
+ * WORKING, 401 = X-Api-Key salah), tetapi kita tetap membaca body untuk
+ * pesan galat yang bermanfaat — lihat `waha-parse.ts`.
  */
 export async function sendWhatsApp(
   phone: string,
@@ -22,34 +25,32 @@ export async function sendWhatsApp(
 ): Promise<SendResult> {
   const url = process.env.WA_GATEWAY_URL;
   const token = process.env.WA_GATEWAY_TOKEN;
+  const session = process.env.WA_SESSION || "default";
 
   if (!url || !token) {
     console.info(`[WA dry-run] → ${phone}: ${body.slice(0, 120)}`);
     return { ok: true, dryRun: true };
   }
 
-  // Fonnte: target tanpa "+", biarkan awalan 62 (nomor kita sudah +62…)
-  const target = phone.replace(/^\+/, "");
-
   try {
-    const res = await fetch(url, {
+    const res = await fetch(endpointKirim(url), {
       method: "POST",
       headers: {
-        Authorization: token,
-        "Content-Type": "application/x-www-form-urlencoded",
+        "X-Api-Key": token,
+        "Content-Type": "application/json",
       },
-      body: new URLSearchParams({ target, message: body }).toString(),
+      body: JSON.stringify({ session, chatId: keChatId(phone), text: body }),
       signal: AbortSignal.timeout(15_000),
     });
 
-    const hasil = interpretasiFonnte(res.status, await res.text());
+    const hasil = interpretasiWaha(res.status, await res.text());
     return hasil.ok
       ? { ok: true, dryRun: false }
       : { ok: false, error: hasil.error };
   } catch (e) {
     return {
       ok: false,
-      error: e instanceof Error ? e.message : "Gagal menghubungi gateway",
+      error: e instanceof Error ? e.message : "Gagal menghubungi WAHA",
     };
   }
 }

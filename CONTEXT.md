@@ -260,7 +260,27 @@ membuat tagihan lunas tanpa uang masuk, dan tak ada yang menahan.
   Kini berkas tes yang SAMA lulus di stub CI **dan** Supabase lokal sungguhan
   (`npm run test:rpc`)
 
-## Gateway WA disamakan dengan API Fonnte sungguhan (23 Jul 2026)
+## Gateway WA: beralih ke WAHA (self-hosted) (23 Jul 2026)
+Atas permintaan, gateway diganti dari Fonnte ke **WAHA** (waha.devlike.pro) —
+WhatsApp HTTP API yang di-hosting sendiri. Diverifikasi ke dokumentasi resmi.
+- `POST {WA_GATEWAY_URL}/api/sendText`, header `X-Api-Key`, body JSON
+  `{session, chatId, text}`; nomor `+62…` → `chatId` `62…@c.us`; `WA_SESSION`
+  (default "default"). Env baru: `WA_SESSION`
+- WAHA memakai **kode HTTP yang benar** (401 api-key, 422 sesi belum WORKING,
+  5xx server) — lebih mudah dari Fonnte, tapi tetap membaca body untuk pesan
+  galat. Logika: `modules/notifications/waha-parse.ts` (fonnte-parse dihapus)
+- `npm run test:gateway` → **13/13** (2xx→kirim, 422→sesi, 401→apikey, 5xx→ulangi,
+  konversi chatId & endpoint). Kini job CI
+- `scripts/cek-wa-gateway.mjs`: **cek status sesi dulu** (masalah tersering:
+  belum scan QR) lalu kirim pesan uji. Teruji lawan mock WAHA 3 keadaan
+  (WORKING→✓, SCAN_QR_CODE→arahan scan, 401→arahan token)
+- **Teruji end-to-end lewat worker + mock WAHA**: request nyata benar
+  (`/api/sendText`, X-Api-Key, `chatId 62…@c.us`, session); **422 → job `failed`
+  bukan `sent`** (pelajaran Fonnte tetap berlaku); 201 → `sent`
+- Panduan ditulis ulang: `docs/SETUP-GATEWAY-WA.md` (Docker WAHA → sesi/QR →
+  env → uji)
+
+## (riwayat) Gateway WA disamakan dengan API Fonnte sungguhan (23 Jul 2026)
 Saat memandu penyiapan kredensial WA, saya verifikasi kode gateway ke dokumentasi
 Fonnte resmi dan menemukan **dua bug yang hanya muncul di produksi**:
 - 🔴 **Kegagalan tercatat sebagai terkirim.** Fonnte SELALU membalas HTTP 200,

@@ -14,13 +14,17 @@ Harus selesai **sebelum** sekolah pilot mulai [UAT](./UAT-SEKOLAH-PILOT.md).
 - [ ] Aktifkan **TOTP MFA**: Authentication → Providers → MFA → TOTP `enabled`
 - [ ] Catat `NEXT_PUBLIC_SUPABASE_URL`, anon key, service role key
 
-## 2. Gateway WhatsApp
+## 2. Gateway WhatsApp (WAHA — self-hosted)
 
-- [ ] Daftar Fonnte/Wablas, sambungkan nomor WhatsApp sekolah
-- [ ] **Gunakan nomor khusus**, bukan nomor pribadi staf
+Panduan lengkap: `docs/SETUP-GATEWAY-WA.md`.
+
+- [ ] Jalankan server WAHA (Docker) di belakang domain + HTTPS
+- [ ] Set `WAHA_API_KEY` (kunci rahasia panjang) + volume persisten sesi
+- [ ] Start sesi `default` → scan QR dengan **nomor khusus** (bukan pribadi)
 - [ ] Siapkan 1 nomor cadangan (risiko pemblokiran — PRD §10)
-- [ ] Isi `WA_GATEWAY_URL` & `WA_GATEWAY_TOKEN`
-- [ ] Uji kirim satu pesan ke nomor sendiri
+- [ ] Isi `WA_GATEWAY_URL` (URL WAHA), `WA_GATEWAY_TOKEN` (=`WAHA_API_KEY`),
+      opsional `WA_SESSION`
+- [ ] `node scripts/cek-wa-gateway.mjs "+62…"` → status sesi WORKING + pesan tiba
 
 > Tanpa kredensial ini sistem tetap jalan, tetapi notifikasi hanya masuk
 > antrean dan **tidak benar-benar terkirim** (mode dry-run).

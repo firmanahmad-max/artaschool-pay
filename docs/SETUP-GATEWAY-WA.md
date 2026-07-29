@@ -1,12 +1,13 @@
-# Menyiapkan Gateway WhatsApp (Fonnte)
+# Menyiapkan Gateway WhatsApp (WAHA)
 
-Panduan mendapatkan dan memasang kredensial gateway WhatsApp. Setelah ini,
-notifikasi (pembayaran disetujui/ditolak, pengumuman, digest, dan **OTP login
-orang tua**) benar-benar terkirim — bukan hanya masuk log dry-run.
+Panduan menjalankan dan memasang **WAHA** (WhatsApp HTTP API,
+<https://waha.devlike.pro>) sebagai gateway. Setelah ini notifikasi
+(pembayaran disetujui/ditolak, pengumuman, digest, dan **OTP login orang tua**)
+benar-benar terkirim — bukan hanya masuk log dry-run.
 
-> Aplikasi memakai **Fonnte**. Kode gateway sudah mengikuti API Fonnte persis
-> (`modules/notifications/gateway.ts`). Provider lain (mis. Wablas) bentuk
-> API-nya berbeda dan perlu penyesuaian kode.
+> WAHA di-**hosting sendiri** (Docker), berbeda dari layanan SaaS. Anda
+> menjalankan servernya, lalu aplikasi memanggilnya lewat HTTP. Kode gateway
+> sudah mengikuti API WAHA persis (`modules/notifications/gateway.ts`).
 
 ---
 
@@ -21,44 +22,62 @@ Siapkan **satu nomor khusus** (kartu SIM baru / nomor sekolah), idealnya plus
 
 ## Langkah
 
-### 1. Daftar Fonnte
-1. Buka https://fonnte.com lalu daftar.
-2. Isi saldo/paket sesuai perkiraan volume. Kasar: (jumlah wali) × (notifikasi
-   per bulan) + OTP login. Untuk sekolah pilot kecil, paket termurah cukup.
+### 1. Jalankan server WAHA
 
-### 2. Sambungkan nomor WhatsApp ("Device")
-1. Dashboard → **Device** → **Add Device**.
-2. Buka WhatsApp di ponsel bernomor khusus tadi → **Perangkat Tertaut** →
-   **Tautkan Perangkat** → pindai QR yang muncul di Fonnte.
-3. Pastikan status device menjadi **connected**.
+WAHA berjalan sebagai container Docker. Cara paling sederhana:
 
-> Ponsel ini harus tetap menyala & online. Untuk produksi, gunakan ponsel yang
-> memang didedikasikan (bukan yang dibawa pulang staf).
+```bash
+docker run -d --name waha --restart always \
+  -p 3000:3000 \
+  -e WAHA_API_KEY=GANTI_DENGAN_KUNCI_RAHASIA_PANJANG \
+  -e WHATSAPP_DEFAULT_ENGINE=WEBJS \
+  devlikeapro/waha
+```
 
-### 3. Salin token
-- Dashboard → **Device** → salin **Token** milik device tersebut.
-- Ini nilai untuk `WA_GATEWAY_TOKEN`. Token per-device, bukan token akun.
+- **`WAHA_API_KEY`** = kunci rahasia; ini nilai untuk `WA_GATEWAY_TOKEN` nanti.
+  Buat acak & panjang.
+- Untuk produksi: taruh di belakang domain + HTTPS (mis. Caddy/Nginx), jangan
+  ekspos port 3000 mentah ke internet. Alamat inilah `WA_GATEWAY_URL`.
+- Simpan volume agar sesi tidak hilang saat container restart — lihat dok WAHA
+  "Persistent storage".
 
-### 4. Isi environment variable
+### 2. Buat & sambungkan sesi
+
+WAHA memakai konsep **sesi**. Sesi default bernama `default`.
+
+1. Buka dashboard WAHA: `http://SERVER:3000/dashboard` (login pakai API key).
+2. **Start** sesi `default`.
+3. Status akan menjadi **SCAN_QR_CODE** → buka WhatsApp di ponsel bernomor
+   khusus → **Perangkat Tertaut** → **Tautkan Perangkat** → pindai QR.
+4. Status berubah menjadi **WORKING**. Baru pada status ini pesan bisa dikirim.
+
+> Nomor selain `default`? Set `WA_SESSION` ke nama sesi tersebut.
+
+### 3. Isi environment variable
 
 Di `.env.local` (pengembangan) atau dashboard Vercel (produksi):
 
 ```
-WA_GATEWAY_URL=https://api.fonnte.com/send
-WA_GATEWAY_TOKEN=<token dari langkah 3>
+WA_GATEWAY_URL=https://waha.sekolah-anda.com   # URL dasar WAHA, tanpa /api
+WA_GATEWAY_TOKEN=<WAHA_API_KEY dari langkah 1>
+WA_SESSION=default                              # boleh dikosongkan
 ```
 
-### 5. Uji sebelum dipakai sungguhan
+Aplikasi otomatis menambah `/api/sendText` — cukup isi URL dasarnya.
 
-Kirim satu pesan uji ke nomor Anda sendiri:
+### 4. Uji sebelum dipakai sungguhan
 
 ```bash
 node scripts/cek-wa-gateway.mjs "+62812xxxxxxxx"
 ```
 
-- **✓ BERHASIL** + pesan tiba di ponsel → kredensial siap.
-- **✗ DITOLAK** → skrip menyebut alasannya dan cara memperbaiki
-  (token salah, device terputus, kuota habis, format nomor).
+Skrip akan:
+1. **Cek status sesi** dulu — bila belum `WORKING`, ia memberi tahu persis apa
+   yang kurang (scan QR / start sesi / API key salah).
+2. Bila `WORKING`, **kirim satu pesan uji** ke nomor tujuan.
+
+- **✓ BERHASIL** + pesan tiba → kredensial siap.
+- **✗** → skrip menyebut penyebab & solusinya.
 
 ---
 
@@ -71,7 +90,7 @@ sambungan tambahan — lihat `docs/CHECKLIST-GO-LIVE.md` §3:
 1. Supabase → Authentication → Hooks → aktifkan **Send SMS** hook →
    arahkan ke `https://APLIKASI/api/hooks/send-sms`.
 2. Salin secret hook (format `v1,whsec_…`) ke `SEND_SMS_HOOK_SECRET`.
-3. Hook meneruskan OTP ke gateway yang sama. Tanpa `WA_GATEWAY_*`, OTP hanya
+3. Hook meneruskan OTP ke WAHA yang sama. Tanpa `WA_GATEWAY_*`, OTP hanya
    masuk log dry-run dan **orang tua tidak bisa login**.
 
 ---
@@ -80,22 +99,26 @@ sambungan tambahan — lihat `docs/CHECKLIST-GO-LIVE.md` §3:
 
 | Gejala | Kemungkinan sebab |
 |---|---|
-| Skrip uji ✗ "token invalid" | Token salah / bukan token device. Salin ulang. |
-| Skrip uji ✗ "device disconnect" | Ponsel gateway offline / WhatsApp keluar. Scan ulang QR. |
-| Skrip uji ✓ tapi pesan tak tiba | Nomor tujuan salah format, atau diblokir. Coba nomor lain. |
+| Skrip uji ✗ "X-Api-Key ditolak" | Token salah. Samakan dengan `WAHA_API_KEY`. |
+| Skrip uji ✗ status "SCAN_QR_CODE" | Sesi belum ditautkan. Scan QR di dashboard WAHA. |
+| Skrip uji ✗ status "STOPPED" | Sesi belum di-start. Start di dashboard WAHA. |
+| Skrip uji ✗ "Sesi tidak ada" | Nama sesi salah. Cek `WA_SESSION`. |
 | Notifikasi macet di antrean | Cek monitor `/admin/pengumuman`. "Gagal permanen" = alasan ada di kolom galat. |
-| Semua "Gagal permanen" mendadak | Nomor gateway kemungkinan diblokir WhatsApp. Alihkan ke nomor cadangan. |
+| Tiba-tiba semua HTTP 422 | Sesi keluar dari WORKING (WA logout / ponsel offline). Scan ulang. |
 
-Antrean punya retry + dead-letter otomatis, jadi gangguan sesaat akan dicoba
-ulang. Yang "Gagal permanen" perlu tindakan manusia.
+Antrean punya retry + dead-letter otomatis, jadi gangguan sesaat (sesi sempat
+reconnect) akan dicoba ulang. "Gagal permanen" perlu tindakan manusia.
 
 ---
 
 ## Catatan teknis (untuk yang memelihara)
 
-- Fonnte **selalu membalas HTTP 200**, bahkan saat gagal — sukses/gagal ada di
-  field `status` pada body. Kode gateway sudah membaca `status`, bukan sekadar
-  kode HTTP (`modules/notifications/fonnte-parse.ts`, diuji `npm run test:gateway`).
-- Body dikirim sebagai form (`x-www-form-urlencoded`), bukan JSON.
+- Endpoint kirim: `POST {WA_GATEWAY_URL}/api/sendText`, header `X-Api-Key`,
+  body JSON `{ session, chatId, text }`. Nomor `+62…` → `chatId` `62…@c.us`.
+- WAHA memakai **kode HTTP yang benar** (401 api-key, 422 sesi belum WORKING,
+  5xx server) — berbeda dari sebagian gateway lain yang selalu 200. Logika
+  interpretasi ada di `modules/notifications/waha-parse.ts`, diuji
+  `npm run test:gateway`.
+- Ponsel gateway harus tetap online agar sesi bertahan WORKING.
 - Worker pengirim: `POST /api/jobs/notifications` (cron Vercel tiap 5 menit),
-  dengan throttle 250 ms/pesan agar nomor tidak dianggap spam.
+  throttle 250 ms/pesan agar tidak dianggap spam.

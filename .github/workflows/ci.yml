@@ -36,7 +36,7 @@ jobs:
         run: npm run test:scrub
       - name: Kontras WCAG 2.1 AA (kedua tema)
         run: npm run audit:kontras
-      - name: Interpretasi respons gateway WhatsApp (Fonnte)
+      - name: Interpretasi respons gateway WhatsApp (WAHA)
         run: npm run test:gateway
 
   database:
