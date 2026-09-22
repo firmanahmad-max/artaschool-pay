@@ -1,7 +1,9 @@
+import { Download } from "lucide-react";
 import type { Metadata } from "next";
 import { DeleteAccountSection } from "@/components/delete-account";
 import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireGuardian } from "@/modules/auth/guards";
 
@@ -44,6 +46,26 @@ export default async function AkunPage() {
             Daftar anak dan kelasnya — hadir di Sprint 3 (master data siswa).
           </CardDescription>
         </CardHeader>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Data Pribadi</CardTitle>
+          <CardDescription>
+            Unduh salinan data yang sekolah simpan tentang Anda (profil, anak
+            terhubung, dan riwayat pembayaran) dalam berkas JSON.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <a
+            href="/akun/ekspor"
+            download
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            <Download className="h-4 w-4" aria-hidden />
+            Unduh data saya
+          </a>
+        </CardContent>
       </Card>
 
       <Card>

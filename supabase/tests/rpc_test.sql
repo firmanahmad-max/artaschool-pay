@@ -413,6 +413,55 @@ begin
                           'admin tak bisa hapus akun wali', 'wali aktif');
 end $$;
 
+-- ── 12. Ekspor data wali (UU PDP — hak akses & isolasi) ────────────────────
+\echo ''
+\echo '[12] export_my_guardian_data — hak akses & isolasi antar-wali'
+do $$
+declare
+  v_sekolah uuid; v_s1 uuid; v_s2 uuid; v_ga uuid; v_gb uuid; v_ua uuid; v_json jsonb;
+begin
+  v_sekolah := uji.sekolah();
+
+  insert into students (school_id, nis, full_name)
+  values (v_sekolah, 'UJIEXP1', 'Anak Wali A') returning id into v_s1;
+  insert into students (school_id, nis, full_name)
+  values (v_sekolah, 'UJIEXP2', 'Anak Wali B') returning id into v_s2;
+
+  -- Wali A (subjek ekspor)
+  insert into guardians (school_id, full_name, phone, email)
+  values (v_sekolah, 'Wali A Ekspor', '+6281100000101', 'a@contoh.id') returning id into v_ga;
+  insert into guardian_students (guardian_id, student_id) values (v_ga, v_s1);
+  insert into payments (school_id, student_id, amount, status, method, submitted_by, sender_name)
+  values (v_sekolah, v_s1, 111000, 'approved', 'transfer', v_ga, 'PENGIRIM_A_UNIK');
+
+  -- Wali B (tetangga se-sekolah — datanya TIDAK boleh ikut terekspor)
+  insert into guardians (school_id, full_name, phone, email)
+  values (v_sekolah, 'Wali B Ekspor', '+6281100000102', 'b@contoh.id') returning id into v_gb;
+  insert into guardian_students (guardian_id, student_id) values (v_gb, v_s2);
+  insert into payments (school_id, student_id, amount, status, method, submitted_by, sender_name)
+  values (v_sekolah, v_s2, 222000, 'approved', 'transfer', v_gb, 'PENGIRIM_B_UNIK');
+
+  v_ua := uji.jadi_wali('+6281100000101');   -- masuk sebagai Wali A
+  select export_my_guardian_data() into v_json;
+
+  perform uji.samakan(v_json->'wali'->>'nama', 'Wali A Ekspor', 'profil wali sendiri termuat');
+  perform uji.samakan(jsonb_array_length(v_json->'pembayaran'), 1, 'hanya pembayaran sendiri');
+  perform uji.samakan(v_json->'pembayaran'->0->>'nama_pengirim', 'PENGIRIM_A_UNIK',
+                      'pembayaran sendiri termuat');
+  perform uji.samakan(position('PENGIRIM_B_UNIK' in v_json::text), 0,
+                      'data wali lain TIDAK bocor');
+  perform uji.samakan(jsonb_array_length(v_json->'anak'), 1, 'anak sendiri termuat');
+  perform uji.samakan(v_json->'anak'->0->>'nis', 'UJIEXP1', 'nis anak benar');
+  perform uji.samakan(exists (select 1 from audit_logs
+                              where entity_id = v_ga and action = 'guardian.data_exported'),
+                      true, 'audit akses tercatat');
+
+  -- Admin (bukan wali) tidak bisa memakai RPC ini.
+  perform uji.jadi_admin('operator', 'aal2');
+  perform uji.harus_gagal('select export_my_guardian_data()',
+                          'admin tak bisa ekspor data wali', 'wali aktif');
+end $$;
+
 -- Buang seluruh data uji; basis data kembali seperti semula.
 rollback;
 

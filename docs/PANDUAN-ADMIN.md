@@ -55,8 +55,11 @@ Kalau orang tua tidak bisa masuk, periksa nomornya di halaman detail siswa. Satu
 ### Siswa keluar/pindah
 Gunakan **Nonaktifkan Siswa** — jangan dihapus. Siswa nonaktif tidak mendapat tagihan baru, tetapi riwayatnya tetap utuh untuk pembukuan.
 
-### Wali menghapus akunnya (UU PDP)
-Orang tua berhak menghapus akunnya sendiri dari menu **Akun**. Yang terhapus hanya data pribadinya (nama, nomor HP, email, akses login) — **riwayat pembayaran tetap tersimpan** demi pembukuan (7 tahun). Pada pembayaran lama, pengirimnya akan muncul sebagai **"Akun Dihapus"**; ini normal, bukan kerusakan data. Anak yang tadinya tertaut ke wali itu akan kehilangan keterkaitannya — daftarkan ulang nomor wali bila diperlukan.
+### Hak data wali (UU PDP)
+Dari menu **Akun**, orang tua bisa memakai dua haknya sendiri — tanpa perlu bantuan admin:
+
+- **Unduh data saya** — mengunduh salinan JSON berisi profil, anak terhubung, dan riwayat pembayarannya. Hanya datanya sendiri; data wali lain tidak ikut.
+- **Hapus akun** — menghapus data pribadinya (nama, nomor HP, email, akses login). **Riwayat pembayaran tetap tersimpan** demi pembukuan (7 tahun). Pada pembayaran lama, pengirimnya akan muncul sebagai **"Akun Dihapus"**; ini normal, bukan kerusakan data. Anak yang tadinya tertaut akan kehilangan keterkaitannya — daftarkan ulang nomor wali bila diperlukan.
 
 ---
 

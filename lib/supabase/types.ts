@@ -842,6 +842,7 @@ export type Database = {
         }
         Returns: string
       }
+      export_my_guardian_data: { Args: never; Returns: Json }
       format_rupiah: { Args: { p: number }; Returns: string }
       generate_bills: {
         Args: {
