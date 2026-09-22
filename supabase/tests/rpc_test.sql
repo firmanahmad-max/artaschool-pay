@@ -347,6 +347,72 @@ begin
     'viewer membuat tagihan', 'berwenang');
 end $$;
 
+-- ── 11. Hapus akun wali (UU PDP §8) ────────────────────────────────────────
+-- Data pribadi harus hilang, catatan keuangan harus TETAP (retensi 7 tahun).
+\echo ''
+\echo '[11] delete_my_guardian_account — erasure vs retensi pembukuan'
+do $$
+declare
+  v_sekolah uuid; v_siswa uuid; v_gid uuid; v_uid uuid; v_bayar uuid; v_job bigint;
+begin
+  v_sekolah := uji.sekolah();
+  select id into v_siswa from students where school_id = v_sekolah and is_active limit 1;
+
+  -- Wali uji dengan data pribadi lengkap + keterkaitan + jejak.
+  insert into guardians (school_id, full_name, phone, email)
+  values (v_sekolah, 'Wali Uji Hapus', '+6281100000099', 'wali.hapus@contoh.id')
+  returning id into v_gid;
+  insert into guardian_students (guardian_id, student_id) values (v_gid, v_siswa);
+  insert into payments (school_id, student_id, amount, status, method, submitted_by)
+  values (v_sekolah, v_siswa, 250000, 'approved', 'transfer', v_gid) returning id into v_bayar;
+  insert into notification_jobs (school_id, recipient_guardian_id, recipient_phone, template, body)
+  values (v_sekolah, v_gid, '+6281100000099', 'payment.approved', 'uji') returning id into v_job;
+
+  v_uid := uji.jadi_wali('+6281100000099');   -- masuk sebagai wali tsb
+
+  perform delete_my_guardian_account();
+
+  -- Data pribadi terhapus, baris tetap ada (FK payments utuh).
+  perform uji.samakan((select full_name from guardians where id = v_gid), 'Akun Dihapus',
+                      'nama dianonimkan');
+  perform uji.samakan((select email from guardians where id = v_gid) is null, true,
+                      'email dihapus');
+  perform uji.samakan((select auth_user_id from guardians where id = v_gid) is null, true,
+                      'tautan login dilepas');
+  perform uji.samakan((select phone from guardians where id = v_gid) like 'deleted:%', true,
+                      'nomor HP di-tombstone');
+  perform uji.samakan((select deleted_at from guardians where id = v_gid) is not null, true,
+                      'ditandai deleted_at');
+
+  -- Catatan keuangan DIPERTAHANKAN (pembukuan 7 tahun).
+  perform uji.samakan(exists (select 1 from payments where id = v_bayar and submitted_by = v_gid),
+                      true, 'pembayaran tetap tersimpan & tertaut');
+
+  -- Jejak operasional & keterkaitan dibersihkan.
+  perform uji.samakan(exists (select 1 from guardian_students where guardian_id = v_gid),
+                      false, 'keterkaitan anak dilepas');
+  perform uji.samakan(exists (select 1 from notification_jobs where id = v_job),
+                      false, 'notifikasi tertunda dibatalkan');
+
+  -- Identitas login benar-benar dihapus (auth.users menyimpan nomor asli).
+  perform uji.samakan(exists (select 1 from auth.users where id = v_uid),
+                      false, 'identitas auth dihapus');
+
+  -- Jejak audit tercatat tanpa data pribadi.
+  perform uji.samakan(exists (select 1 from audit_logs
+                               where entity_id = v_gid and action = 'guardian.account_deleted'),
+                      true, 'audit penghapusan tercatat');
+
+  -- Tidak bisa dijalankan ulang (sudah bukan wali aktif).
+  perform uji.harus_gagal('select delete_my_guardian_account()',
+                          'hapus ulang ditolak', 'wali aktif');
+
+  -- Admin (bukan wali) tidak bisa memakai RPC ini.
+  perform uji.jadi_admin('operator', 'aal2');
+  perform uji.harus_gagal('select delete_my_guardian_account()',
+                          'admin tak bisa hapus akun wali', 'wali aktif');
+end $$;
+
 -- Buang seluruh data uji; basis data kembali seperti semula.
 rollback;
 

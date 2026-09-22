@@ -142,3 +142,39 @@ export async function logout(target: "parent" | "admin") {
   await supabase.auth.signOut();
   redirect(target === "admin" ? "/admin/login" : "/login");
 }
+
+/**
+ * Hapus akun wali sendiri (UU PDP §8 — hak penghapusan data).
+ *
+ * Data pribadi (nama, HP, email, identitas login) dihapus; catatan keuangan
+ * (pembayaran) DIPERTAHANKAN ter-anonimkan demi retensi pembukuan 7 tahun
+ * (PRD §8). Seluruh mutasi + penghapusan identitas login terjadi di dalam RPC
+ * `delete_my_guardian_account` (satu transaksi, otorisasi via auth.uid()).
+ */
+export async function deleteMyGuardianAccount(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  // Konfirmasi eksplisit — cegah submit tak sengaja.
+  if (formData.get("konfirmasi") !== "HAPUS") {
+    return { ok: false, error: "Ketik HAPUS untuk mengonfirmasi." };
+  }
+
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { error } = await supabase.rpc("delete_my_guardian_account");
+  if (error) {
+    return {
+      ok: false,
+      error: "Gagal menghapus akun. Coba lagi atau hubungi pihak sekolah.",
+    };
+  }
+
+  // Identitas auth sudah dihapus di dalam RPC; bersihkan cookie sesi lokal.
+  await supabase.auth.signOut();
+  redirect("/login?dihapus=1");
+}

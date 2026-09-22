@@ -391,6 +391,7 @@ export type Database = {
       guardians: {
         Row: {
           auth_user_id: string | null
+          deleted_at: string | null
           email: string | null
           full_name: string
           id: string
@@ -399,6 +400,7 @@ export type Database = {
         }
         Insert: {
           auth_user_id?: string | null
+          deleted_at?: string | null
           email?: string | null
           full_name: string
           id?: string
@@ -407,6 +409,7 @@ export type Database = {
         }
         Update: {
           auth_user_id?: string | null
+          deleted_at?: string | null
           email?: string | null
           full_name?: string
           id?: string
@@ -809,6 +812,7 @@ export type Database = {
       current_guardian_id: { Args: never; Returns: string }
       current_guardian_school_id: { Args: never; Returns: string }
       current_guardian_student_ids: { Args: never; Returns: string[] }
+      delete_my_guardian_account: { Args: never; Returns: undefined }
       enqueue_daily_digest: { Args: never; Returns: number }
       enqueue_notification: {
         Args: {

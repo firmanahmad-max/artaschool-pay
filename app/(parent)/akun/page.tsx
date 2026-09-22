@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DeleteAccountSection } from "@/components/delete-account";
 import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,6 +44,19 @@ export default async function AkunPage() {
             Daftar anak dan kelasnya — hadir di Sprint 3 (master data siswa).
           </CardDescription>
         </CardHeader>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Hapus Akun</CardTitle>
+          <CardDescription>
+            Hak Anda menghapus data pribadi (UU PDP). Riwayat pembayaran tetap
+            disimpan sekolah untuk pembukuan, tanpa identitas Anda.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DeleteAccountSection />
+        </CardContent>
       </Card>
     </div>
   );
