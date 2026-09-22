@@ -1,5 +1,6 @@
 import { Download } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { DeleteAccountSection } from "@/components/delete-account";
 import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -56,7 +57,7 @@ export default async function AkunPage() {
             terhubung, dan riwayat pembayaran) dalam berkas JSON.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
           <a
             href="/akun/ekspor"
             download
@@ -65,6 +66,16 @@ export default async function AkunPage() {
             <Download className="h-4 w-4" aria-hidden />
             Unduh data saya
           </a>
+          <p className="text-sm text-muted-foreground">
+            Pelajari{" "}
+            <Link
+              href="/privasi"
+              className="text-primary underline-offset-4 hover:underline"
+            >
+              Kebijakan Privasi &amp; Data
+            </Link>
+            .
+          </p>
         </CardContent>
       </Card>
 

@@ -26,6 +26,11 @@ export default function LoginPage({
           Masuk sebagai admin
         </Link>
       </p>
+      <p className="text-center text-sm text-muted-foreground">
+        <Link href="/privasi" className="underline-offset-4 hover:underline">
+          Kebijakan Privasi &amp; Data
+        </Link>
+      </p>
     </div>
   );
 }
