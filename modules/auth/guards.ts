@@ -6,6 +6,7 @@ export type GuardianProfile = {
   id: string;
   full_name: string;
   phone: string;
+  email: string | null;
   school_id: string;
 };
 
@@ -26,7 +27,7 @@ export async function requireGuardian(): Promise<GuardianProfile> {
 
   const { data: guardian } = await supabase
     .from("guardians")
-    .select("id, full_name, phone, school_id")
+    .select("id, full_name, phone, email, school_id")
     .eq("auth_user_id", user.id)
     .maybeSingle();
 

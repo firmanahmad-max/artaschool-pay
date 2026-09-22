@@ -1,11 +1,19 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { adminLoginSchema, otpSchema, phoneSchema } from "./schemas";
+import {
+  adminLoginSchema,
+  guardianProfileSchema,
+  otpSchema,
+  phoneSchema,
+} from "./schemas";
 
-export type ActionResult = { ok: true } | { ok: false; error: string };
+export type ActionResult =
+  | { ok: true; message?: string }
+  | { ok: false; error: string };
 
 /**
  * Kirim OTP WhatsApp/SMS ke nomor wali TERDAFTAR.
@@ -141,6 +149,38 @@ export async function logout(target: "parent" | "admin") {
   const supabase = createClient();
   await supabase.auth.signOut();
   redirect(target === "admin" ? "/admin/login" : "/login");
+}
+
+/**
+ * Wali membetulkan data pribadinya sendiri (UU PDP — hak koreksi).
+ * Hanya nama & email. Nomor HP (kunci login) diubah lewat sekolah.
+ */
+export async function updateMyGuardianProfile(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  const parsed = guardianProfileSchema.safeParse({
+    full_name: formData.get("full_name"),
+    email: formData.get("email"),
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Input tidak valid",
+    };
+  }
+
+  const supabase = createClient();
+  const { error } = await supabase.rpc("update_my_guardian_profile", {
+    p_full_name: parsed.data.full_name,
+    p_email: parsed.data.email ?? "",
+  });
+  if (error) {
+    return { ok: false, error: "Gagal menyimpan perubahan. Coba lagi." };
+  }
+
+  revalidatePath("/akun");
+  return { ok: true, message: "Perubahan tersimpan." };
 }
 
 /**

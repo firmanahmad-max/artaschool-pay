@@ -2,6 +2,7 @@ import { Download } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DeleteAccountSection } from "@/components/delete-account";
+import { EditProfileForm } from "@/components/edit-profile-form";
 import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { buttonVariants } from "@/components/ui/button";
@@ -19,11 +20,20 @@ export default async function AkunPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{guardian.full_name}</CardTitle>
-          <CardDescription>{guardian.phone}</CardDescription>
+          <CardTitle className="text-base">Profil</CardTitle>
+          <CardDescription>
+            Perbarui nama dan email Anda kapan saja.
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <LogoutButton target="parent" />
+        <CardContent className="space-y-4">
+          <EditProfileForm
+            fullName={guardian.full_name}
+            email={guardian.email}
+            phone={guardian.phone}
+          />
+          <div className="border-t border-border pt-4">
+            <LogoutButton target="parent" />
+          </div>
         </CardContent>
       </Card>
 

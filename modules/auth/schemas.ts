@@ -31,3 +31,20 @@ export const adminLoginSchema = z.object({
   email: z.string().trim().email("Email tidak valid"),
   password: z.string().min(8, "Kata sandi minimal 8 karakter"),
 });
+
+/** Wali menyunting profilnya sendiri (nama & email). Nomor HP = kunci login,
+ *  hanya bisa diubah lewat sekolah, jadi tidak termasuk di sini. */
+export const guardianProfileSchema = z.object({
+  full_name: z
+    .string()
+    .trim()
+    .min(1, "Nama wajib diisi")
+    .max(100, "Nama terlalu panjang (maksimal 100 karakter)"),
+  // Email opsional: boleh dikosongkan untuk menghapusnya.
+  email: z
+    .union([
+      z.literal(""),
+      z.string().trim().email("Email tidak valid").max(150),
+    ])
+    .transform((v) => (v === "" ? null : v)),
+});

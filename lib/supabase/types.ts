@@ -918,6 +918,10 @@ export type Database = {
         Returns: string
       }
       unwaive_bill: { Args: { p_bill_id: string }; Returns: undefined }
+      update_my_guardian_profile: {
+        Args: { p_full_name: string; p_email: string }
+        Returns: undefined
+      }
       waive_bill: {
         Args: { p_bill_id: string; p_note: string }
         Returns: undefined

@@ -462,6 +462,48 @@ begin
                           'admin tak bisa ekspor data wali', 'wali aktif');
 end $$;
 
+-- ── 13. Koreksi profil wali (UU PDP — hak koreksi) ─────────────────────────
+\echo ''
+\echo '[13] update_my_guardian_profile — hak koreksi & batas kolom'
+do $$
+declare v_sekolah uuid; v_gid uuid; v_uid uuid;
+begin
+  v_sekolah := uji.sekolah();
+  insert into guardians (school_id, full_name, phone, email)
+  values (v_sekolah, 'Nama Lama', '+6281100000201', 'lama@contoh.id') returning id into v_gid;
+
+  v_uid := uji.jadi_wali('+6281100000201');
+
+  perform update_my_guardian_profile('Nama Baru', 'baru@contoh.id');
+  perform uji.samakan((select full_name from guardians where id = v_gid), 'Nama Baru',
+                      'nama diperbarui');
+  perform uji.samakan((select email from guardians where id = v_gid), 'baru@contoh.id',
+                      'email diperbarui');
+  -- Nomor HP (kunci login) TIDAK boleh berubah lewat RPC ini.
+  perform uji.samakan((select phone from guardians where id = v_gid), '+6281100000201',
+                      'nomor HP tetap');
+
+  -- Email boleh dikosongkan.
+  perform update_my_guardian_profile('Nama Baru', '');
+  perform uji.samakan((select email from guardians where id = v_gid) is null, true,
+                      'email bisa dikosongkan');
+
+  -- Validasi masukan.
+  perform uji.harus_gagal('select update_my_guardian_profile('''', ''x@y.z'')',
+                          'nama kosong ditolak', 'Nama wajib');
+  perform uji.harus_gagal('select update_my_guardian_profile(''X'', ''bukan-email'')',
+                          'email tak valid ditolak', 'Email tidak valid');
+
+  perform uji.samakan(exists (select 1 from audit_logs
+                              where entity_id = v_gid and action = 'guardian.profile_updated'),
+                      true, 'audit koreksi tercatat');
+
+  -- Admin (bukan wali) tidak bisa memakai RPC ini.
+  perform uji.jadi_admin('operator', 'aal2');
+  perform uji.harus_gagal('select update_my_guardian_profile(''Z'', '''')',
+                          'admin tak bisa ubah profil wali', 'wali aktif');
+end $$;
+
 -- Buang seluruh data uji; basis data kembali seperti semula.
 rollback;
 
