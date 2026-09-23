@@ -75,7 +75,7 @@ Panduan lengkap: `docs/SETUP-GATEWAY-WA.md`.
 
 ## 6. Verifikasi keamanan
 
-- [ ] `npm run pentest` → **21/21 lulus**
+- [ ] `npm run pentest` → **30/30 lulus**
 - [ ] `npm run backup:drill` → lulus, simpan dump ke storage terenkripsi terpisah
 - [ ] Cek header: `curl -I https://APLIKASI` → CSP ber-nonce, HSTS, X-Frame-Options
 - [ ] Pastikan bukti transfer **tidak** bisa diakses tanpa signed URL
