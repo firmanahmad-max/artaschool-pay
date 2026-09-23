@@ -70,6 +70,37 @@ export async function getChildrenWithBills(guardianId: string) {
   return result;
 }
 
+/**
+ * Daftar ringkas anak yang tertaut ke wali (nama, NIS, kelas aktif, relasi).
+ * Ringan — tanpa tagihan; untuk halaman Akun. RLS membatasi ke anak sendiri.
+ */
+export async function getGuardianChildren(guardianId: string) {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("guardian_students")
+    .select(
+      "relation, students(id, nis, full_name, is_active, class_enrollments(classes(label, academic_years(is_active))))",
+    )
+    .eq("guardian_id", guardianId);
+
+  return (data ?? [])
+    .filter((l) => !!l.students)
+    .map((l) => {
+      const s = l.students!;
+      const activeClass = s.class_enrollments.find(
+        (e) => e.classes?.academic_years?.is_active,
+      );
+      return {
+        id: s.id,
+        nis: s.nis,
+        full_name: s.full_name,
+        is_active: s.is_active,
+        classLabel: activeClass?.classes?.label ?? "—",
+        relation: l.relation ?? "wali",
+      };
+    });
+}
+
 export async function getSchoolBankAccounts(): Promise<BankAccount[]> {
   const supabase = createClient();
   const { data } = await supabase

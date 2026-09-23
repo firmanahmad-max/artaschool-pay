@@ -8,11 +8,13 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireGuardian } from "@/modules/auth/guards";
+import { getGuardianChildren } from "@/modules/payments/queries";
 
 export const metadata: Metadata = { title: "Akun" };
 
 export default async function AkunPage() {
   const guardian = await requireGuardian();
+  const children = await getGuardianChildren(guardian.id);
 
   return (
     <div className="space-y-4">
@@ -54,9 +56,43 @@ export default async function AkunPage() {
         <CardHeader>
           <CardTitle className="text-base">Anak Terhubung</CardTitle>
           <CardDescription>
-            Daftar anak dan kelasnya — hadir di Sprint 3 (master data siswa).
+            Anak yang tertaut ke akun Anda. Untuk perubahan, hubungi sekolah.
           </CardDescription>
         </CardHeader>
+        <CardContent>
+          {children.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Belum ada anak yang tertaut. Hubungi pihak sekolah bila ini
+              keliru.
+            </p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {children.map((child) => (
+                <li
+                  key={child.id}
+                  className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {child.full_name}
+                      {!child.is_active && (
+                        <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
+                          nonaktif
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      NIS {child.nis} · {child.relation}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-sm text-muted-foreground">
+                    {child.classLabel}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
       </Card>
 
       <Card>
