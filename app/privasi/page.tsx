@@ -121,8 +121,9 @@ export default function PrivasiPage() {
           </li>
         </ul>
         <p>
-          Untuk <strong>memperbaiki</strong> data yang keliru (mis. salah nama
-          atau nomor HP), hubungi pihak sekolah.
+          <strong>Nama dan email</strong> dapat Anda perbaiki sendiri lewat menu
+          Akun. Untuk data lain yang keliru (mis. nomor HP atau data siswa),
+          hubungi pihak sekolah.
         </p>
       </Bagian>
 
