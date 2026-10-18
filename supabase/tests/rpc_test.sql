@@ -504,6 +504,31 @@ begin
                           'admin tak bisa ubah profil wali', 'wali aktif');
 end $$;
 
+-- ── 14. RPC internal tertutup untuk publik ─────────────────────────────────
+-- Fungsi SECURITY DEFINER tanpa cek otorisasi di badannya HANYA boleh
+-- dipanggil internal / service_role. Dicek per nama (semua overload) agar tetap
+-- berlaku walau signature berubah.
+\echo ''
+\echo '[14] RPC internal tak bisa dieksekusi anon/authenticated'
+do $$
+declare v_fn record; v_bocor text := '';
+begin
+  for v_fn in
+    select p.oid, p.proname
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname in ('enqueue_notification', 'enqueue_notification_phone',
+                        'claim_notification_jobs', 'complete_notification_job',
+                        'find_duplicate_proof', 'recompute_bill_amount_paid')
+  loop
+    if has_function_privilege('anon', v_fn.oid, 'execute')
+       or has_function_privilege('authenticated', v_fn.oid, 'execute') then
+      v_bocor := v_bocor || v_fn.proname || ' ';
+    end if;
+  end loop;
+  perform uji.samakan(v_bocor, '', 'tak ada RPC internal yang terbuka');
+end $$;
+
 -- Buang seluruh data uji; basis data kembali seperti semula.
 rollback;
 
