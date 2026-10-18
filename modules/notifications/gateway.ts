@@ -1,4 +1,5 @@
 import "server-only";
+import { waMode } from "./mode";
 import { endpointKirim, interpretasiWaha, keChatId } from "./waha-parse";
 
 export type SendResult = { ok: true; dryRun: boolean } | { ok: false; error: string };
@@ -12,8 +13,9 @@ export type SendResult = { ok: true; dryRun: boolean } | { ok: false; error: str
  *   WA_GATEWAY_TOKEN = nilai header X-Api-Key
  *   WA_SESSION       = nama sesi WAHA (opsional, default "default")
  *
- * Bila WA_GATEWAY_URL/TOKEN belum diset (dev lokal), jalan mode DRY-RUN:
- * pesan hanya dicetak ke log dan alur tetap bisa diuji tanpa WAHA asli.
+ * Perilaku tanpa gateway ditentukan `waMode()` (lihat mode.ts): dev lokal →
+ * DRY-RUN (pesan dicetak ke log); produksi → MANUAL (gagal terang-terangan,
+ * pesan menunggu di Kotak Keluar WA untuk dikirim admin).
  *
  * Berbeda dari Fonnte, WAHA memakai kode HTTP yang benar (422 = sesi belum
  * WORKING, 401 = X-Api-Key salah), tetapi kita tetap membaca body untuk
@@ -26,10 +28,24 @@ export async function sendWhatsApp(
   const url = process.env.WA_GATEWAY_URL;
   const token = process.env.WA_GATEWAY_TOKEN;
   const session = process.env.WA_SESSION || "default";
+  const mode = waMode();
 
-  if (!url || !token) {
+  // Mode manual: tak ada yang bisa dikirim otomatis. Jangan pura-pura sukses
+  // (dry-run akan mencetak isi pesan — termasuk OTP — ke log produksi).
+  if (mode === "manual") {
+    return { ok: false, error: "Mode manual: gateway WhatsApp tidak aktif" };
+  }
+
+  if (mode === "dry-run") {
     console.info(`[WA dry-run] → ${phone}: ${body.slice(0, 120)}`);
     return { ok: true, dryRun: true };
+  }
+
+  if (!url || !token) {
+    return {
+      ok: false,
+      error: "WA_MODE=gateway tetapi WA_GATEWAY_URL/WA_GATEWAY_TOKEN kosong",
+    };
   }
 
   try {

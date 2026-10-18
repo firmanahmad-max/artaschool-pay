@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { otpWaTersedia } from "@/modules/notifications/mode";
 import {
   adminLoginSchema,
   guardianProfileSchema,
@@ -24,6 +25,16 @@ export async function requestParentOtp(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
+  // Mode manual: tak ada gateway yang mengirim OTP — jangan membuat Supabase
+  // menghasilkan kode yang tak akan pernah sampai.
+  if (!otpWaTersedia()) {
+    return {
+      ok: false,
+      error:
+        "Masuk dengan kode WhatsApp belum tersedia. Gunakan nomor HP + PIN, atau aktivasi akun dengan kode dari sekolah.",
+    };
+  }
+
   const parsed = phoneSchema.safeParse(formData.get("phone"));
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Input tidak valid" };

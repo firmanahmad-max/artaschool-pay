@@ -36,5 +36,36 @@ cek("pesan memuat kode", pesan.includes("*123456*"));
 cek("pesan TIDAK lagi menjanjikan 5 menit secara mati", !pesan.includes("5 menit"));
 cek("pesan menyebut durasi sebenarnya", pesan.includes("Berlaku 1 menit"));
 
+console.log("\n[PIN] validasi");
+cek("PIN wajar diterima", k.validasiPin("482913") === null);
+cek("bukan 6 angka ditolak", k.validasiPin("12345") !== null && k.validasiPin("12a456") !== null);
+cek("angka sama semua ditolak (000000)", k.validasiPin("000000") !== null);
+cek("berurutan naik ditolak (123456)", k.validasiPin("123456") !== null);
+cek("berurutan turun ditolak (654321)", k.validasiPin("654321") !== null);
+cek("berurutan berputar ditolak (890123)", k.validasiPin("890123") !== null);
+cek("pola 121212 ditolak", k.validasiPin("121212") !== null);
+cek("pola 123123 ditolak", k.validasiPin("123123") !== null);
+cek("pola 112233 ditolak", k.validasiPin("112233") !== null);
+cek("PIN mirip pola tapi acak diterima (135792)", k.validasiPin("135792") === null);
+
+console.log("\n[Kode aktivasi]");
+cek("normalisasi 'abcd-efgh ' → ABCDEFGH", k.normalisasiKode("abcd-efgh ") === "ABCDEFGH");
+cek("kode alfabet aman valid", k.kodeAktivasiValid("K7QM3XPA"));
+cek("huruf ambigu (O) ditolak", !k.kodeAktivasiValid("K7QMOXPA"));
+cek("angka ambigu (1) ditolak", !k.kodeAktivasiValid("K7QM1XPA"));
+cek("panjang salah ditolak", !k.kodeAktivasiValid("K7QM3XP"));
+const sql = readFileSync("supabase/migrations/019_guardian_activation.sql", "utf8");
+const alfabetSql = sql.match(/v_alfabet\s+constant text := '([^']+)'/)?.[1];
+cek("alfabet TS == alfabet SQL migration 019", alfabetSql === k.ALFABET_KODE,
+  `(SQL=${alfabetSql})`);
+cek("alfabet 31 karakter tanpa I L O 0 1",
+  k.ALFABET_KODE.length === 31 && !/[ILO01]/.test(k.ALFABET_KODE));
+cek("format ABCD-EFGH", k.formatKode("K7QM3XPA") === "K7QM-3XPA");
+cek("urlAktivasi tanpa garis miring ganda",
+  k.urlAktivasi("https://pay.sekolah.id/") === "https://pay.sekolah.id/login?aktivasi=1");
+const pesanA = k.pesanAktivasi({ nama: "Made", kode: "K7QM3XPA", urlAktivasi: "https://x.id/login?aktivasi=1" });
+cek("pesan aktivasi memuat kode terformat", pesanA.includes("*K7QM-3XPA*"));
+cek("pesan aktivasi memuat tautan aktivasi", pesanA.includes("https://x.id/login?aktivasi=1"));
+
 console.log(`\n=== ${lulus}/${lulus + gagal.length} lulus ===`);
 if (gagal.length) process.exit(1);

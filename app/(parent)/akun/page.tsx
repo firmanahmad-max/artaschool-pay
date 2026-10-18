@@ -7,6 +7,8 @@ import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PinForm } from "@/components/pin-form";
+import { createClient } from "@/lib/supabase/server";
 import { requireGuardian } from "@/modules/auth/guards";
 import { getGuardianChildren } from "@/modules/payments/queries";
 
@@ -14,7 +16,10 @@ export const metadata: Metadata = { title: "Akun" };
 
 export default async function AkunPage() {
   const guardian = await requireGuardian();
-  const children = await getGuardianChildren(guardian.id);
+  const [children, { data: punyaPin }] = await Promise.all([
+    getGuardianChildren(guardian.id),
+    createClient().rpc("my_pin_is_set"),
+  ]);
 
   return (
     <div className="space-y-4">
@@ -36,6 +41,21 @@ export default async function AkunPage() {
           <div className="border-t border-border pt-4">
             <LogoutButton target="parent" />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">PIN Masuk</CardTitle>
+          <CardDescription>
+            {punyaPin
+              ? "Ubah PIN 6 angka yang Anda pakai untuk masuk."
+              : "Buat PIN 6 angka agar bisa masuk dengan nomor HP + PIN."}{" "}
+            Lupa PIN? Minta kode aktivasi baru ke sekolah.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PinForm punyaPin={!!punyaPin} />
         </CardContent>
       </Card>
 
@@ -76,7 +96,7 @@ export default async function AkunPage() {
                     <p className="truncate text-sm font-medium">
                       {child.full_name}
                       {!child.is_active && (
-                        <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
+                        <span className="ml-2 rounded bg-border px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
                           nonaktif
                         </span>
                       )}

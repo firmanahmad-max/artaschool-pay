@@ -29,15 +29,29 @@ Panduan lengkap: `docs/SETUP-GATEWAY-WA.md`.
 > Tanpa kredensial ini sistem tetap jalan, tetapi notifikasi hanya masuk
 > antrean dan **tidak benar-benar terkirim** (mode dry-run).
 
-## 3. OTP login orang tua
+## 3. Login orang tua
+
+**Utama — kode aktivasi + PIN (tidak butuh gateway WA):**
+
+- [ ] Supabase → Authentication → Providers → **Phone harus aktif** (dipakai
+      login nomor HP + PIN). Supabase mensyaratkan pengirim SMS — arahkan ke
+      hook `send_sms` di bawah walau gateway belum ada.
+- [ ] Isi `APP_URL` (URL publik aplikasi) — dipakai pada tautan aktivasi di
+      pesan WA ke wali
+- [ ] Terbitkan kode aktivasi untuk setiap wali: Siswa & Kelas → buka siswa →
+      **Kode aktivasi** → **Kirim via WhatsApp** (lihat Panduan Admin)
+- [ ] Uji: aktivasi 1 wali → masuk dengan nomor HP + PIN → ubah PIN di Akun
+
+**Opsional — OTP WhatsApp (hanya bila gateway §2 sudah jalan):**
 
 - [ ] Aktifkan auth hook `send_sms` di Supabase → arahkan ke
       `https://APLIKASI/api/hooks/send-sms` (endpoint sudah ada)
 - [ ] Buat secret hook di Supabase (format `v1,whsec_<base64>`), salin ke
       env `SEND_SMS_HOOK_SECRET` aplikasi — endpoint memverifikasi tanda tangan
       Standard Webhooks dan menolak yang tidak sah
-- [ ] Pastikan `WA_GATEWAY_URL`/`TOKEN` terisi (hook meneruskan OTP ke gateway;
-      tanpa itu OTP hanya masuk log dry-run dan **orang tua tak bisa login**)
+- [ ] Pastikan `WA_GATEWAY_URL`/`TOKEN` terisi (hook meneruskan OTP ke gateway).
+      Tanpa gateway, opsi "Masuk dengan kode WhatsApp" otomatis disembunyikan
+      dan wali memakai PIN
 - [ ] Supabase → Authentication → Providers → Phone → **SMS OTP Expiry = 300**
       (default hanya **60 detik** — terlalu singkat bagi wali yang membaca WA
       agak lambat), lalu isi env `SMS_OTP_EXPIRY_SECONDS=300` dengan nilai
@@ -79,7 +93,7 @@ Panduan lengkap: `docs/SETUP-GATEWAY-WA.md`.
 
 ## 6. Verifikasi keamanan
 
-- [ ] `npm run pentest` → **38/38 lulus**
+- [ ] `npm run pentest` → **48/48 lulus**
 - [ ] `npm run backup:drill` → lulus, simpan dump ke storage terenkripsi terpisah
 - [ ] Cek header: `curl -I https://APLIKASI` → CSP ber-nonce, HSTS, X-Frame-Options
 - [ ] Pastikan bukti transfer **tidak** bisa diakses tanpa signed URL

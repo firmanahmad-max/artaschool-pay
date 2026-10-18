@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { removeGuardianLink, setStudentActive } from "@/modules/students/actions";
 import { getActiveYear, getClasses, getStudent } from "@/modules/students/queries";
+import { AktivasiWali } from "./aktivasi-wali";
 import { AddGuardianForm, EditStudentForm } from "./edit-forms";
 
 export const metadata: Metadata = { title: "Ubah Siswa" };
@@ -56,7 +57,8 @@ export default async function EditSiswaPage({
         <CardHeader>
           <CardTitle className="text-base">Wali terhubung</CardTitle>
           <CardDescription>
-            Nomor HP wali adalah kunci login OTP aplikasi orang tua.
+            Nomor HP wali adalah kunci login aplikasi orang tua. Wali baru
+            perlu kode aktivasi untuk membuat PIN.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -67,25 +69,37 @@ export default async function EditSiswaPage({
               {student.guardians.map((g) => (
                 <li
                   key={g.id}
-                  className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm"
+                  className="space-y-3 rounded-md border border-border px-3 py-2 text-sm"
                 >
-                  <span>
-                    <span className="font-medium">{g.name}</span>{" "}
-                    <span className="text-muted-foreground">
-                      · {g.phone} · {g.relation}
+                  <div className="flex items-center justify-between gap-3">
+                    <span>
+                      <span className="font-medium">{g.name}</span>{" "}
+                      <span className="text-muted-foreground">
+                        · {g.phone} · {g.relation}
+                      </span>{" "}
+                      <span
+                        className={
+                          g.aktif
+                            ? "rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                            : "rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                        }
+                      >
+                        {g.aktif ? "Akun aktif" : "Belum aktivasi"}
+                      </span>
                     </span>
-                  </span>
-                  <form action={removeGuardianLink}>
-                    <input type="hidden" name="student_id" value={student.id} />
-                    <input type="hidden" name="guardian_id" value={g.id} />
-                    <button
-                      type="submit"
-                      aria-label={`Lepas tautan ${g.name}`}
-                      className="text-muted-foreground hover:text-red-600 dark:hover:text-red-400"
-                    >
-                      <Trash2 className="h-4 w-4" aria-hidden />
-                    </button>
-                  </form>
+                    <form action={removeGuardianLink}>
+                      <input type="hidden" name="student_id" value={student.id} />
+                      <input type="hidden" name="guardian_id" value={g.id} />
+                      <button
+                        type="submit"
+                        aria-label={`Lepas tautan ${g.name}`}
+                        className="text-muted-foreground hover:text-red-600 dark:hover:text-red-400"
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden />
+                      </button>
+                    </form>
+                  </div>
+                  <AktivasiWali guardianId={g.id} aktif={g.aktif} />
                 </li>
               ))}
             </ul>

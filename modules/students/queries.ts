@@ -65,7 +65,7 @@ export async function getStudent(id: string) {
   const { data } = await supabase
     .from("students")
     .select(
-      "id, nis, full_name, is_active, class_enrollments(class_id, classes(label, academic_years(is_active))), guardian_students(relation, guardians(id, full_name, phone))",
+      "id, nis, full_name, is_active, class_enrollments(class_id, classes(label, academic_years(is_active))), guardian_students(relation, guardians(id, full_name, phone, auth_user_id))",
     )
     .eq("id", id)
     .maybeSingle();
@@ -83,6 +83,8 @@ export async function getStudent(id: string) {
       name: g.guardians?.full_name ?? "?",
       phone: g.guardians?.phone ?? "",
       relation: g.relation ?? "wali",
+      // Sudah pernah masuk (PIN atau OTP) → akunnya tertaut.
+      aktif: !!g.guardians?.auth_user_id,
     })),
   };
 }

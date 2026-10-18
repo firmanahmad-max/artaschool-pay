@@ -519,7 +519,9 @@ begin
     where n.nspname = 'public'
       and p.proname in ('enqueue_notification', 'enqueue_notification_phone',
                         'claim_notification_jobs', 'complete_notification_job',
-                        'find_duplicate_proof', 'recompute_bill_amount_paid')
+                        'find_duplicate_proof', 'recompute_bill_amount_paid',
+                        'verify_activation_code', 'complete_guardian_activation',
+                        'auth_user_id_by_phone')
   loop
     if has_function_privilege('anon', v_fn.oid, 'execute')
        or has_function_privilege('authenticated', v_fn.oid, 'execute') then
@@ -527,6 +529,111 @@ begin
     end if;
   end loop;
   perform uji.samakan(v_bocor, '', 'tak ada RPC internal yang terbuka');
+end $$;
+
+-- ── 15. Kode aktivasi + PIN (login tanpa gateway) ──────────────────────────
+\echo ''
+\echo '[15] Kode aktivasi: format, percobaan, kedaluwarsa, sekali pakai, wewenang'
+do $$
+declare
+  v_sekolah uuid := uji.sekolah();
+  v_gid uuid; v_uid uuid; v_kode text; v_kode2 text; i int;
+begin
+  insert into guardians (school_id, full_name, phone)
+  values (v_sekolah, 'Wali Aktivasi', '+6281100000301') returning id into v_gid;
+
+  perform uji.jadi_admin('operator', 'aal2');
+  v_kode := issue_activation_code(v_gid);
+  perform uji.samakan(v_kode ~ '^[ABCDEFGHJKMNPQRSTUVWXYZ2-9]{8}$', true,
+                      'kode 8 karakter dari alfabet aman');
+  perform uji.samakan(
+    (select code_hash <> v_kode from guardian_activation_codes
+     where guardian_id = v_gid and revoked_at is null), true,
+    'kode tersimpan sbg hash, bukan plaintext');
+  perform uji.samakan(
+    exists (select 1 from audit_logs where entity_id = v_gid
+            and action = 'guardian.activation_issued'
+            and coalesce(after::text, '') not like '%' || v_kode || '%'),
+    true, 'audit penerbitan tanpa plaintext');
+
+  -- Kode salah dicatat (tidak ter-rollback)
+  perform uji.samakan(verify_activation_code('+6281100000301', 'ZZZZZZZZ') is null, true,
+                      'kode salah → ditolak');
+  perform uji.samakan((select attempts from guardian_activation_codes
+                       where guardian_id = v_gid and revoked_at is null), 1,
+                      'percobaan salah tercatat');
+
+  -- Kode benar, toleran huruf kecil + tanda hubung
+  perform uji.samakan(
+    verify_activation_code('6281100000301',
+      lower(substr(v_kode, 1, 4)) || '-' || lower(substr(v_kode, 5))),
+    v_gid, 'kode benar (huruf kecil, ber-strip, tanpa +) → wali');
+
+  -- Terbitkan ulang → kode lama mati
+  v_kode2 := issue_activation_code(v_gid);
+  perform uji.samakan(verify_activation_code('+6281100000301', v_kode) is null, true,
+                      'kode lama dicabut saat diterbitkan ulang');
+
+  -- 5 kali salah → kode dikunci, kode benar pun ditolak
+  for i in 1 .. 5 loop
+    perform verify_activation_code('+6281100000301', 'ZZZZZZZZ');
+  end loop;
+  perform uji.samakan(verify_activation_code('+6281100000301', v_kode2) is null, true,
+                      '5x salah → kode terkunci');
+
+  -- Kedaluwarsa
+  v_kode := issue_activation_code(v_gid);
+  update guardian_activation_codes set expires_at = now() - interval '1 minute'
+  where guardian_id = v_gid and revoked_at is null and used_at is null;
+  perform uji.samakan(verify_activation_code('+6281100000301', v_kode) is null, true,
+                      'kode kedaluwarsa → ditolak');
+
+  -- Sekali pakai + penautan akun
+  v_kode := issue_activation_code(v_gid);
+  v_uid := gen_random_uuid();
+  insert into auth.users (id, phone) values (v_uid, '6281100000301');
+  perform uji.samakan(auth_user_id_by_phone('+6281100000301'), v_uid,
+                      'akun auth lama ditemukan lewat nomor');
+  perform complete_guardian_activation(v_gid, v_uid);
+  perform uji.samakan((select auth_user_id from guardians where id = v_gid), v_uid,
+                      'akun tertaut ke wali');
+  perform uji.samakan(verify_activation_code('+6281100000301', v_kode) is null, true,
+                      'kode yg sudah dipakai → ditolak');
+  perform uji.samakan(
+    exists (select 1 from audit_logs where entity_id = v_gid and action = 'guardian.activated'),
+    true, 'audit aktivasi tercatat');
+
+  -- PIN terdeteksi
+  perform set_config('request.jwt.claims', jsonb_build_object('sub', v_uid::text)::text, false);
+  perform uji.samakan(my_pin_is_set(), false, 'belum ada PIN → false');
+  update auth.users set encrypted_password = '$2a$10$hash' where id = v_uid;
+  perform uji.samakan(my_pin_is_set(), true, 'PIN tersetel → true');
+
+  -- Audit dari sisi wali: hanya aksi dalam daftar
+  perform uji.jadi_wali('+6281100000301');
+  perform log_guardian_event('guardian.pin_changed');
+  perform uji.samakan(
+    exists (select 1 from audit_logs where entity_id = v_gid and action = 'guardian.pin_changed'),
+    true, 'wali mencatat ubah PIN');
+  perform uji.harus_gagal('select log_guardian_event(''payment.approved'')',
+                          'wali tak bisa memalsukan aksi audit lain', 'tidak dikenal');
+
+  -- Wewenang
+  perform uji.jadi_admin('admin_keuangan', 'aal1');
+  perform uji.harus_gagal(format('select issue_activation_code(%L)', v_gid),
+                          'admin keuangan tanpa 2FA ditolak', '2FA');
+  perform uji.jadi_admin('viewer', 'aal2');
+  perform uji.harus_gagal(format('select issue_activation_code(%L)', v_gid),
+                          'viewer ditolak', 'berwenang');
+  perform uji.jadi_wali('+6281100000301');
+  perform uji.harus_gagal(format('select issue_activation_code(%L)', v_gid),
+                          'wali tak bisa menerbitkan kode', 'berwenang');
+
+  -- Wali terhapus (UU PDP) tak bisa diaktifkan lagi
+  perform uji.jadi_admin('operator', 'aal2');
+  update guardians set deleted_at = now() where id = v_gid;
+  perform uji.harus_gagal(format('select issue_activation_code(%L)', v_gid),
+                          'wali terhapus ditolak', 'tidak ditemukan');
 end $$;
 
 -- Buang seluruh data uji; basis data kembali seperti semula.

@@ -52,6 +52,21 @@ Kerjakan **berurutan** — langkah berikut bergantung pada langkah sebelumnya.
 ### Nomor HP wali = kunci login
 Kalau orang tua tidak bisa masuk, periksa nomornya di halaman detail siswa. Satu wali bisa menaungi beberapa anak, dan satu anak bisa punya dua wali.
 
+### Kode aktivasi wali (masuk dengan PIN)
+Orang tua masuk dengan **nomor HP + PIN 6 angka**. Untuk membuat PIN pertama kali — atau saat **lupa PIN** — mereka butuh kode aktivasi dari sekolah:
+
+1. Buka siswa di **Siswa & Kelas** → bagian **Wali terhubung**. Label **Belum aktivasi** / **Akun aktif** menunjukkan status tiap wali.
+2. Tekan **Kode aktivasi** (atau **Reset PIN** untuk wali yang sudah aktif).
+3. Tekan **Kirim via WhatsApp** — WhatsApp terbuka dengan pesan siap kirim ke nomor wali tsb (berisi kode + tautan aktivasi). Tekan Kirim. Alternatif: **Salin pesan**, atau tulis kodenya di kertas untuk rapat orang tua.
+
+Aturan kode:
+- Berlaku **7 hari** dan **sekali pakai**. Menerbitkan kode baru otomatis membatalkan kode lama.
+- **5 kali salah** → kode terkunci; terbitkan yang baru.
+- Kode **hanya tampil sekali** dan tidak bisa dilihat lagi (disimpan teracak). Jangan menyimpannya.
+- Setiap penerbitan tercatat di Audit Log. **Jangan pernah** memakai kode wali untuk masuk sendiri sebagai wali.
+
+Super admin & admin keuangan wajib sudah verifikasi 2FA untuk menerbitkan kode.
+
 ### Siswa keluar/pindah
 Gunakan **Nonaktifkan Siswa** — jangan dihapus. Siswa nonaktif tidak mendapat tagihan baru, tetapi riwayatnya tetap utuh untuk pembukuan.
 

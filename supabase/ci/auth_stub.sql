@@ -19,6 +19,10 @@ end $$;
 create table if not exists auth.users (
   id uuid primary key default gen_random_uuid()
 );
+-- Kolom yang dibaca RPC aktivasi/PIN (019). Di Supabase asli keduanya ada;
+-- phone disimpan TANPA '+' (mis. 62812…), sama seperti di sini.
+alter table auth.users add column if not exists phone text;
+alter table auth.users add column if not exists encrypted_password text;
 
 -- Klaim JWT tiruan. SENGAJA meniru implementasi Supabase asli: membaca
 -- `request.jwt.claims` sebagai satu objek JSON. Kalau stub ini berbeda dari

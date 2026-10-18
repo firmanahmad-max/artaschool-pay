@@ -68,6 +68,22 @@ cek("spasi/strip dibersihkan", keChatId("+62 812-3456-7890") === "6281234567890@
 cek("URL dasar → /api/sendText", endpointKirim("https://waha.contoh.com") === "https://waha.contoh.com/api/sendText");
 cek("trailing slash dirapikan", endpointKirim("https://waha.contoh.com/") === "https://waha.contoh.com/api/sendText");
 
+// Tautan wa.me untuk mode semi-otomatis (Kotak Keluar WA, kode aktivasi)
+const wl = readFileSync("modules/notifications/wa-link.ts", "utf8");
+const wlFile = join(mkdtempSync(join(tmpdir(), "walink-")), "w.mjs");
+writeFileSync(wlFile, transpileModule(wl, { compilerOptions: { module: ModuleKind.ESNext } }).outputText);
+const { nomorWa, tautanWa } = await import("file://" + wlFile.replace(/\\/g, "/"));
+
+console.log("\nTautan wa.me (mode manual):");
+cek("+62 812-3456 → 628123456", nomorWa("+62 812-3456") === "628123456");
+cek("0812… → 62812…", nomorWa("081234567001") === "6281234567001");
+cek("62812… tetap", nomorWa("6281234567001") === "6281234567001");
+const link = tautanWa("+6281234567001", "Halo & salam\nBaris 2: Rp 350.000");
+cek("format https://wa.me/<nomor>?text=", link.startsWith("https://wa.me/6281234567001?text="));
+cek("teks ter-encode (& dan baris baru aman)",
+  link.includes("Halo%20%26%20salam%0ABaris%202") &&
+  decodeURIComponent(link.split("text=")[1]) === "Halo & salam\nBaris 2: Rp 350.000");
+
 console.log(`\n=== ${lulus}/${lulus + gagal.length} lulus ===`);
 if (gagal.length) { console.error("GAGAL: " + gagal.join(", ")); process.exit(1); }
 console.log("Interpretasi respons WAHA benar.\n");
