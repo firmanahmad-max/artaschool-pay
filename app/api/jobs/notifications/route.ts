@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendWhatsApp } from "@/modules/notifications/gateway";
+import { waMode } from "@/modules/notifications/mode";
 
 export const dynamic = "force-dynamic";
 
@@ -26,8 +27,11 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = createAdminClient();
+  // Mode manual: kanal WA dibiarkan menunggu di Kotak Keluar (dikirim admin).
+  const channels = waMode() === "manual" ? ["push"] : ["wa", "push"];
   const { data: jobs, error } = await supabase.rpc("claim_notification_jobs", {
     p_limit: BATCH,
+    p_channels: channels,
   });
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -37,7 +41,10 @@ export async function POST(request: NextRequest) {
   let failed = 0;
 
   for (const job of jobs ?? []) {
-    const result = await sendWhatsApp(job.recipient_phone, job.body);
+    const result =
+      job.channel === "wa"
+        ? await sendWhatsApp(job.recipient_phone, job.body)
+        : { ok: false as const, error: `Kanal ${job.channel} belum didukung` };
     await supabase.rpc("complete_notification_job", {
       p_id: job.id,
       p_ok: result.ok,

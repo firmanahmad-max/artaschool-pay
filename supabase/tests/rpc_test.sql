@@ -636,6 +636,64 @@ begin
                           'wali terhapus ditolak', 'tidak ditemukan');
 end $$;
 
+-- ── 16. Kotak Keluar WA (mode manual) ──────────────────────────────────────
+\echo ''
+\echo '[16] Kotak Keluar WA: klaim per kanal, tandai/lewati, wewenang, isolasi'
+do $$
+declare
+  v_sekolah uuid := uji.sekolah();
+  v_lain uuid; v_wa bigint; v_wa2 bigint; v_push bigint; v_asing bigint; v_n int;
+begin
+  insert into notification_jobs (school_id, channel, recipient_phone, template, body)
+  values (v_sekolah, 'wa', '+6281100000401', 'uji', 'pesan wa 1') returning id into v_wa;
+  insert into notification_jobs (school_id, channel, recipient_phone, template, body)
+  values (v_sekolah, 'wa', '+6281100000402', 'uji', 'pesan wa 2') returning id into v_wa2;
+  insert into notification_jobs (school_id, channel, recipient_phone, template, body)
+  values (v_sekolah, 'push', '+6281100000401', 'uji', 'pesan push') returning id into v_push;
+
+  -- Mode manual: worker hanya mengklaim 'push'; WA tetap menunggu admin.
+  select count(*) into v_n from claim_notification_jobs(50, array['push'])
+  where id in (v_wa, v_wa2, v_push);
+  perform uji.samakan(v_n, 1, 'klaim kanal push saja → 1 job');
+  perform uji.samakan((select status from notification_jobs where id = v_wa), 'queued',
+                      'job WA tidak diklaim worker mode manual');
+
+  perform uji.jadi_admin('operator', 'aal2');
+  perform mark_notification_sent_manually(v_wa);
+  perform uji.samakan((select status from notification_jobs where id = v_wa), 'sent',
+                      'ditandai terkirim manual');
+  perform uji.samakan((select manual_sender is not null and sent_at is not null
+                       from notification_jobs where id = v_wa), true,
+                      'pengirim manual & waktu tercatat');
+  perform uji.harus_gagal(format('select mark_notification_sent_manually(%s)', v_wa),
+                          'tandai dua kali ditolak', 'sudah diproses');
+
+  perform skip_notification(v_wa2);
+  perform uji.samakan((select status from notification_jobs where id = v_wa2), 'skipped',
+                      'dilewati → skipped (beda dari dead)');
+
+  perform uji.harus_gagal(format('select mark_notification_sent_manually(%s)', v_push),
+                          'job push tak bisa ditandai manual', 'tidak ditemukan');
+
+  -- Isolasi sekolah
+  insert into schools (name, slug) values ('Sekolah Lain', 'uji-sekolah-lain')
+  returning id into v_lain;
+  insert into notification_jobs (school_id, channel, recipient_phone, template, body)
+  values (v_lain, 'wa', '+6281100000499', 'uji', 'milik sekolah lain') returning id into v_asing;
+  perform uji.harus_gagal(format('select mark_notification_sent_manually(%s)', v_asing),
+                          'admin tak bisa menyentuh pesan sekolah lain', 'tidak ditemukan');
+  perform uji.samakan((select status from notification_jobs where id = v_asing), 'queued',
+                      'pesan sekolah lain tetap utuh');
+
+  -- Wewenang
+  perform uji.jadi_admin('viewer', 'aal2');
+  perform uji.harus_gagal(format('select skip_notification(%s)', v_asing),
+                          'viewer tak bisa mengelola Kotak Keluar', 'berwenang');
+  perform uji.jadi_wali('+6281234567001');
+  perform uji.harus_gagal(format('select mark_notification_sent_manually(%s)', v_asing),
+                          'wali tak bisa mengelola Kotak Keluar', 'berwenang');
+end $$;
+
 -- Buang seluruh data uji; basis data kembali seperti semula.
 rollback;
 

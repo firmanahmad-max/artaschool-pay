@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/modules/auth/guards";
+import { waMode } from "@/modules/notifications/mode";
 import { announcementSchema } from "./schemas";
 
 export type ActionResult =
@@ -10,6 +11,13 @@ export type ActionResult =
   | { ok: false; error: string };
 
 const ANNOUNCE_ROLES = ["super_admin", "operator"];
+
+/** Mode manual: pesan tak terkirim sendiri — arahkan admin ke Kotak Keluar. */
+function keteranganAntrean(jumlah: number): string {
+  return waMode() === "manual"
+    ? `${jumlah} pesan masuk Kotak Keluar WA untuk dikirim manual.`
+    : `${jumlah} pesan WhatsApp masuk antrean.`;
+}
 
 export async function createAnnouncement(
   _prev: ActionResult | null,
@@ -68,7 +76,7 @@ export async function createAnnouncement(
     );
     message = bcError
       ? "Pengumuman tersimpan, tetapi broadcast gagal dijadwalkan."
-      : `Pengumuman tersimpan. ${count ?? 0} pesan WhatsApp masuk antrean.`;
+      : `Pengumuman tersimpan. ${keteranganAntrean(count ?? 0)}`;
   }
 
   revalidatePath("/admin/pengumuman");
@@ -93,7 +101,7 @@ export async function broadcastAnnouncement(
   }
 
   revalidatePath("/admin/pengumuman");
-  return { ok: true, message: `${count ?? 0} pesan WhatsApp masuk antrean.` };
+  return { ok: true, message: keteranganAntrean(count ?? 0) };
 }
 
 export async function deleteAnnouncement(formData: FormData): Promise<void> {

@@ -84,6 +84,26 @@ cek("teks ter-encode (& dan baris baru aman)",
   link.includes("Halo%20%26%20salam%0ABaris%202") &&
   decodeURIComponent(link.split("text=")[1]) === "Halo & salam\nBaris 2: Rp 350.000");
 
+// vCard kontak wali (Daftar Siaran WA di mode manual)
+const vc = readFileSync("modules/announcements/vcard.ts", "utf8");
+const vcFile = join(mkdtempSync(join(tmpdir(), "vcard-")), "v.mjs");
+writeFileSync(vcFile, transpileModule(vc, { compilerOptions: { module: ModuleKind.ESNext } }).outputText);
+const { buatVcard, escapeVcard } = await import("file://" + vcFile.replace(/\\/g, "/"));
+
+console.log("\nvCard kontak wali:");
+const kartu = buatVcard([
+  { nama: "Made Wijaya", phone: "+62 812-3456-7001", keterangan: "Wali Putu (1A), Kadek (4A)" },
+  { nama: "Fatimah; Bin Ali", phone: "+6281234567002" },
+]);
+cek("2 kartu", (kartu.match(/BEGIN:VCARD/g) ?? []).length === 2);
+cek("VERSION 3.0", kartu.includes("VERSION:3.0"));
+cek("nomor dibersihkan (+ dan angka saja)", kartu.includes("TEL;TYPE=CELL:+6281234567001"));
+cek("koma di keterangan di-escape", kartu.includes("Putu (1A)\\, Kadek (4A)"));
+cek("titik koma di nama di-escape (tak merusak field N)", kartu.includes("N:Fatimah\\; Bin Ali;;;;"));
+cek("baris CRLF sesuai standar", kartu.includes("\r\nEND:VCARD"));
+cek("daftar kosong → string kosong", buatVcard([]) === "");
+cek("escape backslash & baris baru", escapeVcard("a\\b\nc") === "a\\\\b\\nc");
+
 console.log(`\n=== ${lulus}/${lulus + gagal.length} lulus ===`);
 if (gagal.length) { console.error("GAGAL: " + gagal.join(", ")); process.exit(1); }
 console.log("Interpretasi respons WAHA benar.\n");

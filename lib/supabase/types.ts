@@ -267,14 +267,14 @@ isOneToOne: false
                   ]
                 },"notification_jobs": {
                   Row: {
-                    "attempts": number,"body": string,"channel": string,"created_at": string | null,"id": number,"last_error": string | null,"max_attempts": number,"next_attempt_at": string,"payload": NonNullable<Json>,"recipient_guardian_id": string | null,"recipient_phone": string,"school_id": string,"sent_at": string | null,"status": string,"template": string
+                    "attempts": number,"body": string,"channel": string,"created_at": string | null,"id": number,"last_error": string | null,"manual_sender": string | null,"max_attempts": number,"next_attempt_at": string,"payload": NonNullable<Json>,"recipient_guardian_id": string | null,"recipient_phone": string,"school_id": string,"sent_at": string | null,"status": string,"template": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "attempts"?: number,"body": string,"channel"?: string,"created_at"?: string | null,"id"?: never,"last_error"?: string | null,"max_attempts"?: number,"next_attempt_at"?: string,"payload"?: NonNullable<Json>,"recipient_guardian_id"?: string | null,"recipient_phone": string,"school_id": string,"sent_at"?: string | null,"status"?: string,"template": string
+                    "attempts"?: number,"body": string,"channel"?: string,"created_at"?: string | null,"id"?: never,"last_error"?: string | null,"manual_sender"?: string | null,"max_attempts"?: number,"next_attempt_at"?: string,"payload"?: NonNullable<Json>,"recipient_guardian_id"?: string | null,"recipient_phone": string,"school_id": string,"sent_at"?: string | null,"status"?: string,"template": string
                   }
                   Update: {
-                    "attempts"?: number,"body"?: string,"channel"?: string,"created_at"?: string | null,"id"?: never,"last_error"?: string | null,"max_attempts"?: number,"next_attempt_at"?: string,"payload"?: NonNullable<Json>,"recipient_guardian_id"?: string | null,"recipient_phone"?: string,"school_id"?: string,"sent_at"?: string | null,"status"?: string,"template"?: string
+                    "attempts"?: number,"body"?: string,"channel"?: string,"created_at"?: string | null,"id"?: never,"last_error"?: string | null,"manual_sender"?: string | null,"max_attempts"?: number,"next_attempt_at"?: string,"payload"?: NonNullable<Json>,"recipient_guardian_id"?: string | null,"recipient_phone"?: string,"school_id"?: string,"sent_at"?: string | null,"status"?: string,"template"?: string
                   }
                   Relationships: [
                     {
@@ -457,13 +457,14 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: string
                            },
 "claim_notification_jobs":
-{ Args: { "p_limit"?: number }; Returns: {
+{ Args: { "p_channels"?: (string)[],"p_limit"?: number }; Returns: {
               "attempts": number,
 "body": string,
 "channel": string,
 "created_at": string | null,
 "id": number,
 "last_error": string | null,
+"manual_sender": string | null,
 "max_attempts": number,
 "next_attempt_at": string,
 "payload": NonNullable<Json>,
@@ -537,6 +538,9 @@ isOneToOne: false
 "log_guardian_event":
 { Args: { "p_action": string }; Returns: undefined
                            },
+"mark_notification_sent_manually":
+{ Args: { "p_id": number }; Returns: undefined
+                           },
 "my_pin_is_set":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
@@ -556,6 +560,9 @@ isOneToOne: false
                            },
 "review_payment":
 { Args: { "p_action": string,"p_note": string,"p_payment_id": string }; Returns: undefined
+                           },
+"skip_notification":
+{ Args: { "p_id": number }; Returns: undefined
                            },
 "submit_payment":
 { Args: { "p_amount": number,"p_bank_name"?: string,"p_bill_ids": (string)[],"p_method"?: string,"p_payment_id": string,"p_proof_path": string,"p_proof_sha256"?: string,"p_revision_of"?: string,"p_sender_name"?: string,"p_student_id": string,"p_transferred_at"?: string }; Returns: string

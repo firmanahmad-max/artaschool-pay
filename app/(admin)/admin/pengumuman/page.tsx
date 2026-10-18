@@ -1,5 +1,7 @@
-import { Trash2 } from "lucide-react";
+import { Download, Trash2 } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatTanggal } from "@/lib/utils";
@@ -8,8 +10,9 @@ import {
   getAnnouncementsForAdmin,
   getNotificationSummary,
 } from "@/modules/announcements/queries";
+import { waMode } from "@/modules/notifications/mode";
 import { getActiveYear, getClasses } from "@/modules/students/queries";
-import { AnnouncementForm, BroadcastButton } from "./forms";
+import { AnnouncementForm, BroadcastButton, SalinTeksButton } from "./forms";
 
 export const metadata: Metadata = { title: "Pengumuman & Broadcast" };
 
@@ -19,9 +22,11 @@ const STATUS_LABEL: Record<string, string> = {
   sent: "Terkirim",
   failed: "Gagal (akan diulang)",
   dead: "Gagal permanen",
+  skipped: "Dilewati admin",
 };
 
 export default async function AdminPengumumanPage() {
+  const manual = waMode() === "manual";
   const activeYear = await getActiveYear();
   const [announcements, notif, classes] = await Promise.all([
     getAnnouncementsForAdmin(),
@@ -37,14 +42,48 @@ export default async function AdminPengumumanPage() {
         <CardHeader>
           <CardTitle className="text-base">Buat pengumuman</CardTitle>
           <CardDescription>
-            Broadcast WhatsApp masuk antrean dan dikirim worker ber-throttle —
-            tidak dikirim langsung saat tombol ditekan (PRD §7.3).
+            {manual
+              ? "Mode manual (gateway WhatsApp belum aktif). Pengumuman tampil di aplikasi wali. Untuk WhatsApp: salin teksnya ke Daftar Siaran / grup sekolah, atau masukkan ke Kotak Keluar untuk dikirim satu per satu."
+              : "Broadcast WhatsApp masuk antrean dan dikirim worker ber-throttle — tidak dikirim langsung saat tombol ditekan (PRD §7.3)."}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <AnnouncementForm classes={classes.map(({ id, label }) => ({ id, label }))} />
+          <AnnouncementForm
+            classes={classes.map(({ id, label }) => ({ id, label }))}
+            manual={manual}
+          />
         </CardContent>
       </Card>
+
+      {manual && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Kirim ke banyak wali tanpa gateway</CardTitle>
+            <CardDescription>
+              1) Unduh kontak wali (.vcf) dan impor ke ponsel WhatsApp sekolah.
+              2) Di WhatsApp: Daftar Siaran → buat daftar (maks. 256 kontak per
+              daftar). 3) Tekan <strong>Salin teks</strong> pada pengumuman,
+              tempel, kirim. Catatan: pesan siaran hanya diterima wali yang
+              menyimpan nomor sekolah — minta wali menyimpannya.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            <a
+              href="/admin/pengumuman/kontak"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              <Download className="h-4 w-4" aria-hidden />
+              Unduh kontak wali (.vcf)
+            </a>
+            <Link
+              href="/admin/kotak-keluar"
+              className={buttonVariants({ variant: "ghost", size: "sm" })}
+            >
+              Buka Kotak Keluar WA
+            </Link>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
@@ -86,7 +125,10 @@ export default async function AdminPengumumanPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-2">
-                      <BroadcastButton id={a.id} />
+                      <SalinTeksButton
+                        teks={`[Pengumuman] ${a.title}${a.body ? `\n${a.body}` : ""}`}
+                      />
+                      <BroadcastButton id={a.id} manual={manual} />
                       <form action={deleteAnnouncement}>
                         <input type="hidden" name="id" value={a.id} />
                         <button

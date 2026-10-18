@@ -1,6 +1,6 @@
 "use client";
 
-import { Megaphone, Send } from "lucide-react";
+import { Check, Copy, Megaphone, Send } from "lucide-react";
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,13 @@ function Feedback({ state }: { state: ActionResult | null }) {
   );
 }
 
-export function AnnouncementForm({ classes }: { classes: ClassOption[] }) {
+export function AnnouncementForm({
+  classes,
+  manual,
+}: {
+  classes: ClassOption[];
+  manual: boolean;
+}) {
   const [state, action] = useFormState(createAnnouncement, null);
   const [scope, setScope] = useState<"all" | "class">("all");
 
@@ -100,7 +106,9 @@ export function AnnouncementForm({ classes }: { classes: ClassOption[] }) {
 
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="broadcast" className="h-4 w-4" />
-        Kirim juga sebagai broadcast WhatsApp (masuk antrean, ber-throttle)
+        {manual
+          ? "Masukkan juga ke Kotak Keluar WA (satu pesan per wali, dikirim manual)"
+          : "Kirim juga sebagai broadcast WhatsApp (masuk antrean, ber-throttle)"}
       </label>
 
       <div className="flex items-center gap-3">
@@ -114,14 +122,14 @@ export function AnnouncementForm({ classes }: { classes: ClassOption[] }) {
   );
 }
 
-export function BroadcastButton({ id }: { id: string }) {
+export function BroadcastButton({ id, manual }: { id: string; manual: boolean }) {
   const [state, action] = useFormState(broadcastAnnouncement, null);
   return (
     <form action={action} className="flex items-center gap-2">
       <input type="hidden" name="id" value={id} />
       <Button type="submit" variant="outline" size="sm">
         <Send className="h-4 w-4" aria-hidden />
-        Broadcast WA
+        {manual ? "Ke Kotak Keluar" : "Broadcast WA"}
       </Button>
       {state && (
         <span
@@ -135,5 +143,27 @@ export function BroadcastButton({ id }: { id: string }) {
         </span>
       )}
     </form>
+  );
+}
+
+/**
+ * Salin teks pengumuman (format sama dgn broadcast) untuk ditempel ke Daftar
+ * Siaran / grup WhatsApp — satu kali kirim ke banyak wali di mode manual.
+ */
+export function SalinTeksButton({ teks }: { teks: string }) {
+  const [tersalin, setTersalin] = useState(false);
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      onClick={async () => {
+        await navigator.clipboard.writeText(teks);
+        setTersalin(true);
+      }}
+    >
+      {tersalin ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
+      {tersalin ? "Tersalin" : "Salin teks"}
+    </Button>
   );
 }

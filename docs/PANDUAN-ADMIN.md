@@ -121,10 +121,31 @@ Pesan **tidak dikirim seketika**. Semua masuk **antrean** dan dikirim bertahap o
 
 | Status | Arti |
 |---|---|
-| Antre | Menunggu giliran kirim |
-| Terkirim | Sudah sampai gateway |
+| Antre | Menunggu giliran kirim (mode manual: menunggu Anda di Kotak Keluar) |
+| Terkirim | Sudah sampai gateway / ditandai terkirim manual |
 | Gagal (akan diulang) | Otomatis dicoba lagi |
 | Gagal permanen | Percobaan habis — periksa nomor tujuan / kuota gateway |
+| Dilewati admin | Sengaja tidak dikirim lewat Kotak Keluar |
+
+### Mode manual (belum ada gateway WhatsApp)
+
+Selama sekolah belum memasang gateway WhatsApp, sistem berjalan dalam **mode manual**: pesan **tidak terkirim sendiri**. Ada dua jalur:
+
+**A. Kotak Keluar WA (pesan per wali)** — ikon lonceng di kanan atas / menu **Kotak Keluar WA**. Angka pada lencana = jumlah pesan menunggu. Isinya: notifikasi pembayaran disetujui/ditolak/perlu revisi, ringkasan harian, dan pengumuman yang Anda masukkan ke Kotak Keluar.
+
+1. Tekan **Buka WhatsApp** — WhatsApp terbuka dengan pesan siap kirim ke nomor wali.
+2. Tekan Kirim di WhatsApp.
+3. Kembali ke Kotak Keluar, tekan **Tandai terkirim**. (**Lewati** bila pesan memang tak perlu dikirim.)
+
+Kerjakan dari ponsel/komputer yang memakai **WhatsApp nomor sekolah**, sekali atau dua kali sehari, supaya wali selalu menerima dari nomor yang sama.
+
+**B. Daftar Siaran WhatsApp (pengumuman ke banyak wali)** — jauh lebih cepat daripada satu per satu:
+
+1. Di halaman Pengumuman → **Unduh kontak wali (.vcf)** → impor ke ponsel WhatsApp sekolah (cukup sekali; ulangi bila ada wali baru).
+2. Di WhatsApp: **Daftar Siaran baru** → pilih kontak wali (maks. 256 per daftar; buat beberapa daftar, mis. per kelas).
+3. Pada pengumuman, tekan **Salin teks** → tempel ke daftar siaran → kirim.
+
+Catatan: pesan siaran **hanya diterima wali yang menyimpan nomor sekolah** di kontaknya — sampaikan hal ini saat rapat orang tua. Berkas .vcf berisi data pribadi wali: jangan disebarkan, hapus setelah diimpor. Setiap unduhan tercatat di Audit Log.
 
 ---
 

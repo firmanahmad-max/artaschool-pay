@@ -14,8 +14,19 @@ Harus selesai **sebelum** sekolah pilot mulai [UAT](./UAT-SEKOLAH-PILOT.md).
 - [ ] Aktifkan **TOTP MFA**: Authentication → Providers → MFA → TOTP `enabled`
 - [ ] Catat `NEXT_PUBLIC_SUPABASE_URL`, anon key, service role key
 
-## 2. Gateway WhatsApp (WAHA — self-hosted)
+## 2. WhatsApp — pilih mode
 
+**Mode manual (tanpa gateway — bisa langsung go-live):** otomatis aktif di
+produksi bila `WA_GATEWAY_URL`/`TOKEN` kosong (atau paksa `WA_MODE=manual`).
+Pesan menunggu di **Kotak Keluar WA** untuk dikirim admin lewat WhatsApp
+sekolah; pengumuman massal lewat Daftar Siaran. Lihat Panduan Admin §6.
+
+- [ ] Tetapkan **satu nomor WhatsApp sekolah** (boleh nomor TU yang sudah ada)
+      untuk mengirim dari Kotak Keluar
+- [ ] Tentukan siapa & kapan memeriksa Kotak Keluar (mis. pukul 10.00 & 15.00)
+- [ ] Impor kontak wali (.vcf) ke ponsel tsb → buat Daftar Siaran per kelas
+
+**Mode gateway (otomatis — WAHA, self-hosted):** setelah ada nomor khusus.
 Panduan lengkap: `docs/SETUP-GATEWAY-WA.md`.
 
 - [ ] Jalankan server WAHA (Docker) di belakang domain + HTTPS
@@ -26,8 +37,8 @@ Panduan lengkap: `docs/SETUP-GATEWAY-WA.md`.
       opsional `WA_SESSION`
 - [ ] `node scripts/cek-wa-gateway.mjs "+62…"` → status sesi WORKING + pesan tiba
 
-> Tanpa kredensial ini sistem tetap jalan, tetapi notifikasi hanya masuk
-> antrean dan **tidak benar-benar terkirim** (mode dry-run).
+> Tanpa kredensial ini, produksi otomatis berjalan dalam **mode manual**
+> (bukan dry-run): tidak ada pesan yang diam-diam dianggap terkirim.
 
 ## 3. Login orang tua
 
@@ -93,7 +104,7 @@ Panduan lengkap: `docs/SETUP-GATEWAY-WA.md`.
 
 ## 6. Verifikasi keamanan
 
-- [ ] `npm run pentest` → **48/48 lulus**
+- [ ] `npm run pentest` → **52/52 lulus**
 - [ ] `npm run backup:drill` → lulus, simpan dump ke storage terenkripsi terpisah
 - [ ] Cek header: `curl -I https://APLIKASI` → CSP ber-nonce, HSTS, X-Frame-Options
 - [ ] Pastikan bukti transfer **tidak** bisa diakses tanpa signed URL

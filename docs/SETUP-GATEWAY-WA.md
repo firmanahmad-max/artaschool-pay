@@ -9,6 +9,12 @@ benar-benar terkirim — bukan hanya masuk log dry-run.
 > menjalankan servernya, lalu aplikasi memanggilnya lewat HTTP. Kode gateway
 > sudah mengikuti API WAHA persis (`modules/notifications/gateway.ts`).
 
+> **Belum punya nomor khusus?** Tidak perlu menunda go-live. Tanpa gateway,
+> aplikasi berjalan dalam **mode manual**: wali masuk dengan kode aktivasi +
+> PIN, dan pesan menunggu di Kotak Keluar WA untuk dikirim admin dari WhatsApp
+> sekolah (lihat `PANDUAN-ADMIN.md` §6). Begitu gateway di bawah aktif, mode
+> berpindah ke otomatis — tidak ada data yang perlu dipindah.
+
 ---
 
 ## Kenapa nomor khusus, bukan nomor pribadi
