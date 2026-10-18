@@ -21,6 +21,7 @@
     "test:scrub": "node scripts/test-scrub.mjs",
     "test:rpc": "docker exec supabase_db_ArtaSchool_Pay psql -U postgres -d postgres -v ON_ERROR_STOP=1 -f /dev/stdin < supabase/tests/rpc_test.sql",
     "test:gateway": "node scripts/test-gateway.mjs",
+    "test:auth": "node scripts/test-auth.mjs",
     "cek:wa": "node scripts/cek-wa-gateway.mjs"
   },
   "dependencies": {

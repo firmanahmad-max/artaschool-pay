@@ -38,6 +38,8 @@ jobs:
         run: npm run audit:kontras
       - name: Interpretasi respons gateway WhatsApp (WAHA)
         run: npm run test:gateway
+      - name: Kredensial wali (OTP, PIN, kode aktivasi)
+        run: npm run test:auth
 
   database:
     name: Validasi skema PostgreSQL 16

@@ -38,6 +38,10 @@ Panduan lengkap: `docs/SETUP-GATEWAY-WA.md`.
       Standard Webhooks dan menolak yang tidak sah
 - [ ] Pastikan `WA_GATEWAY_URL`/`TOKEN` terisi (hook meneruskan OTP ke gateway;
       tanpa itu OTP hanya masuk log dry-run dan **orang tua tak bisa login**)
+- [ ] Supabase → Authentication → Providers → Phone → **SMS OTP Expiry = 300**
+      (default hanya **60 detik** — terlalu singkat bagi wali yang membaca WA
+      agak lambat), lalu isi env `SMS_OTP_EXPIRY_SECONDS=300` dengan nilai
+      yang SAMA agar teks pesan OTP menyebut durasi yang benar
 - [ ] Uji OTP ke minimal 3 nomor berbeda operator (Telkomsel/XL/Indosat)
 - [ ] Pastikan kode masuk < 1 menit
 

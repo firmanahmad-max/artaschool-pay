@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
+import { masaBerlakuOtpDetik, pesanOtp } from "@/modules/auth/kredensial";
 import { sendWhatsApp } from "@/modules/notifications/gateway";
 
 export const dynamic = "force-dynamic";
@@ -88,9 +89,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const body =
-    `Kode masuk ArtaSchool Pay Anda: *${otp}*\n` +
-    `Berlaku 5 menit. Jangan bagikan kode ini kepada siapa pun.`;
+  // Durasi diambil dari konfigurasi, bukan ditulis mati: default Supabase
+  // hanya 60 detik, dan teks lama ("5 menit") menyesatkan wali.
+  const body = pesanOtp(otp, masaBerlakuOtpDetik(process.env.SMS_OTP_EXPIRY_SECONDS));
 
   const result = await sendWhatsApp(phone, body);
   if (!result.ok) {
