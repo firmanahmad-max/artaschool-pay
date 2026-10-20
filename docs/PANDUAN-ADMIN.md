@@ -127,6 +127,12 @@ Pesan **tidak dikirim seketika**. Semua masuk **antrean** dan dikirim bertahap o
 | Gagal permanen | Percobaan habis — periksa nomor tujuan / kuota gateway |
 | Dilewati admin | Sengaja tidak dikirim lewat Kotak Keluar |
 
+### Notifikasi aplikasi (otomatis, gratis)
+
+Wali bisa menyalakan **Notifikasi** di menu Akun aplikasinya. Setelah aktif, kabar pembayaran disetujui/ditolak/perlu revisi dan pengumuman **langsung muncul di ponsel wali secara otomatis** — tanpa gateway WhatsApp dan tanpa kerja manual. Anjurkan semua wali menyalakannya (Android: langsung; iPhone: pasang aplikasi ke Layar Utama dulu).
+
+Di Kotak Keluar, pesan untuk wali yang notifikasi aplikasinya terbukti sampai (≤ 30 hari terakhir) diberi tanda 📲 — WhatsApp manual untuk mereka boleh **Lewati**.
+
 ### Mode manual (belum ada gateway WhatsApp)
 
 Selama sekolah belum memasang gateway WhatsApp, sistem berjalan dalam **mode manual**: pesan **tidak terkirim sendiri**. Ada dua jalur:

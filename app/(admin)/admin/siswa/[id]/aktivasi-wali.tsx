@@ -79,7 +79,7 @@ export function AktivasiWali({
               href={state.tautan}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-9 items-center gap-2 rounded-md bg-emerald-600 px-3 text-sm font-medium text-white hover:bg-emerald-700"
+              className="inline-flex h-9 items-center gap-2 rounded-md bg-emerald-700 px-3 text-sm font-medium text-white hover:bg-emerald-800"
             >
               <MessageCircle className="h-4 w-4" aria-hidden />
               Kirim via WhatsApp

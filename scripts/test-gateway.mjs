@@ -104,6 +104,30 @@ cek("baris CRLF sesuai standar", kartu.includes("\r\nEND:VCARD"));
 cek("daftar kosong → string kosong", buatVcard([]) === "");
 cek("escape backslash & baris baru", escapeVcard("a\\b\nc") === "a\\\\b\\nc");
 
+// Isi notifikasi push (Web Push)
+const pc = readFileSync("modules/notifications/push-content.ts", "utf8");
+const pcFile = join(mkdtempSync(join(tmpdir(), "push-")), "p.mjs");
+writeFileSync(pcFile, transpileModule(pc, { compilerOptions: { module: ModuleKind.ESNext } }).outputText);
+const { isiPush, base64UrlKeUint8 } = await import("file://" + pcFile.replace(/\\/g, "/"));
+
+console.log("\nIsi notifikasi push:");
+const uuid = "e9ed2c90-6029-40a3-a3df-107aa83817de";
+const p1 = isiPush("payment.approved", "Pembayaran Rp 350.000 telah DISETUJUI.", { payment_id: uuid });
+cek("judul disetujui", p1.title.startsWith("Pembayaran disetujui"));
+cek("tautan ke detail riwayat", p1.url === `/riwayat/${uuid}`);
+const p2 = isiPush("payment.needs_revision", "x", { payment_id: "../../admin" });
+cek("payment_id bukan UUID → /riwayat (tak bisa disusupi path)", p2.url === "/riwayat");
+const p3 = isiPush("announcement", "[Pengumuman] Libur\nMulai 20 Des", {});
+cek("pengumuman → /pengumuman", p3.url === "/pengumuman");
+cek("awalan [Pengumuman] dibuang", p3.body.startsWith("Libur"));
+const p4 = isiPush("lain.lain", "a".repeat(400), null);
+cek("template tak dikenal → judul umum + /beranda", p4.title === "ArtaSchool Pay" && p4.url === "/beranda");
+cek("teks panjang dipotong ≤180 + …", p4.body.length === 180 && p4.body.endsWith("…"));
+const wp = (await import("web-push")).default;
+const kunci = wp.generateVAPIDKeys();
+const u8 = base64UrlKeUint8(kunci.publicKey);
+cek("kunci VAPID → 65 byte titik P-256 tak terkompresi", u8.length === 65 && u8[0] === 0x04);
+
 console.log(`\n=== ${lulus}/${lulus + gagal.length} lulus ===`);
 if (gagal.length) { console.error("GAGAL: " + gagal.join(", ")); process.exit(1); }
 console.log("Interpretasi respons WAHA benar.\n");

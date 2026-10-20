@@ -694,6 +694,82 @@ begin
                           'wali tak bisa mengelola Kotak Keluar', 'berwenang');
 end $$;
 
+-- ── 17. Web Push: langganan, fan-out antrean, isolasi, hapus akun ──────────
+\echo ''
+\echo '[17] Web Push: langganan wali, job push, isolasi, hapus akun'
+do $$
+declare
+  v_sekolah uuid := uji.sekolah();
+  v_made uuid; v_fatimah uuid; v_gx uuid; v_n int;
+  v_ep constant text := 'https://fcm.googleapis.com/fcm/send/uji-perangkat-keluarga';
+begin
+  select id into v_made from guardians where phone = '+6281234567001';
+  select id into v_fatimah from guardians where phone = '+6281234567002';
+
+  perform uji.jadi_wali('+6281234567001');
+  perform save_push_subscription(v_ep, 'kunci-p256dh', 'kunci-auth', 'UjiBrowser');
+  perform uji.samakan((select guardian_id from push_subscriptions where endpoint = v_ep), v_made,
+                      'langganan tersimpan milik wali pemanggil');
+  perform uji.harus_gagal(
+    'select save_push_subscription(''http://tidak-aman.contoh/x'', ''a'', ''b'')',
+    'endpoint non-HTTPS ditolak', 'tidak valid');
+
+  -- Perangkat sama dipakai wali lain → berpindah, tidak ganda
+  perform uji.jadi_wali('+6281234567002');
+  perform save_push_subscription(v_ep, 'kunci-p256dh-2', 'kunci-auth-2', 'UjiBrowser');
+  perform uji.samakan((select count(*)::int from push_subscriptions where endpoint = v_ep), 1,
+                      'endpoint tetap satu baris');
+  perform uji.samakan((select guardian_id from push_subscriptions where endpoint = v_ep), v_fatimah,
+                      'endpoint berpindah ke wali yang sedang masuk');
+
+  -- Fan-out: wali berperangkat → job wa + push; tanpa perangkat → wa saja
+  perform enqueue_notification(v_sekolah, v_fatimah, 'uji.push', 'halo fatimah', '{}');
+  select count(*) into v_n from notification_jobs where template = 'uji.push'
+    and recipient_guardian_id = v_fatimah;
+  perform uji.samakan(v_n, 2, 'wali berperangkat: job wa + push');
+  perform uji.samakan(exists (select 1 from notification_jobs where template = 'uji.push'
+                              and recipient_guardian_id = v_fatimah and channel = 'push'),
+                      true, 'job kanal push dibuat');
+  perform enqueue_notification(v_sekolah, v_made, 'uji.push', 'halo made', '{}');
+  select count(*) into v_n from notification_jobs where template = 'uji.push'
+    and recipient_guardian_id = v_made;
+  perform uji.samakan(v_n, 1, 'wali tanpa perangkat: wa saja');
+
+  -- Petunjuk Kotak Keluar: hanya perangkat yang terbukti menerima push
+  perform uji.jadi_admin('operator', 'aal2');
+  perform uji.samakan(v_fatimah in (select outbox_guardians_with_push()), false,
+                      'baru terdaftar (belum pernah sampai) → tidak dianggap menerima');
+  update push_subscriptions set last_success_at = now() where endpoint = v_ep;
+  perform uji.samakan(v_fatimah in (select outbox_guardians_with_push()), true,
+                      'pernah berhasil ≤30 hari → admin melihat petunjuk');
+  update push_subscriptions set last_success_at = now() - interval '31 days' where endpoint = v_ep;
+  perform uji.samakan(v_fatimah in (select outbox_guardians_with_push()), false,
+                      'sukses terakhir >30 hari → petunjuk hilang');
+  update push_subscriptions set last_success_at = now() where endpoint = v_ep;
+  perform uji.jadi_admin('viewer', 'aal2');
+  perform uji.samakan((select count(*)::int from outbox_guardians_with_push()), 0,
+                      'viewer tidak mendapat daftar');
+
+  -- Wali lain tak bisa mencabut perangkat orang
+  perform uji.jadi_wali('+6281234567001');
+  perform delete_push_subscription(v_ep);
+  perform uji.samakan(exists (select 1 from push_subscriptions where endpoint = v_ep), true,
+                      'wali lain tak bisa mencabut perangkat');
+  perform uji.jadi_wali('+6281234567002');
+  perform delete_push_subscription(v_ep);
+  perform uji.samakan(exists (select 1 from push_subscriptions where endpoint = v_ep), false,
+                      'pemilik mencabut perangkatnya');
+
+  -- Hapus akun (UU PDP) ikut menghapus perangkat
+  insert into guardians (school_id, full_name, phone)
+  values (v_sekolah, 'Wali Push Hapus', '+6281100000501') returning id into v_gx;
+  perform uji.jadi_wali('+6281100000501');
+  perform save_push_subscription('https://push.contoh/hapus', 'p', 'a');
+  perform delete_my_guardian_account();
+  perform uji.samakan(exists (select 1 from push_subscriptions where guardian_id = v_gx), false,
+                      'hapus akun menghapus perangkat push');
+end $$;
+
 -- Buang seluruh data uji; basis data kembali seperti semula.
 rollback;
 

@@ -8,8 +8,10 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PinForm } from "@/components/pin-form";
+import { PushToggle } from "@/components/push-toggle";
 import { createClient } from "@/lib/supabase/server";
 import { requireGuardian } from "@/modules/auth/guards";
+import { pushAktif } from "@/modules/notifications/push";
 import { getGuardianChildren } from "@/modules/payments/queries";
 
 export const metadata: Metadata = { title: "Akun" };
@@ -58,6 +60,22 @@ export default async function AkunPage() {
           <PinForm punyaPin={!!punyaPin} />
         </CardContent>
       </Card>
+
+      {pushAktif() && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Notifikasi</CardTitle>
+            <CardDescription>
+              Terima kabar status pembayaran &amp; pengumuman langsung di ponsel,
+              tanpa menunggu WhatsApp. Berlaku per perangkat; otomatis dimatikan
+              saat Anda keluar.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PushToggle publicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!} />
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

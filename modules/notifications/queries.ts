@@ -21,15 +21,20 @@ export const TEMPLATE_LABEL: Record<string, string> = {
 
 export async function getKotakKeluar() {
   const supabase = createClient();
-  const { data } = await supabase
+  const [{ data }, { data: denganPush }] = await Promise.all([
+    supabase
     .from("notification_jobs")
     .select(
-      "id, recipient_phone, template, body, status, last_error, created_at, guardians(full_name)",
+      "id, recipient_phone, template, body, status, last_error, created_at, recipient_guardian_id, guardians(full_name)",
     )
     .eq("channel", "wa")
     .in("status", statusPerluTindakan())
     .order("created_at", { ascending: true })
-    .limit(200);
+    .limit(200),
+    // Wali yang sudah menerima notifikasi aplikasi → admin boleh melewati WA-nya.
+    supabase.rpc("outbox_guardians_with_push"),
+  ]);
+  const punyaPush = new Set<string>((denganPush ?? []) as string[]);
 
   return (data ?? []).map((j) => ({
     id: j.id,
@@ -40,6 +45,7 @@ export async function getKotakKeluar() {
     status: j.status,
     lastError: j.last_error,
     createdAt: j.created_at,
+    punyaPush: !!j.recipient_guardian_id && punyaPush.has(j.recipient_guardian_id),
   }));
 }
 

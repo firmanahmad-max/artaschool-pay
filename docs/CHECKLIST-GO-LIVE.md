@@ -26,6 +26,17 @@ sekolah; pengumuman massal lewat Daftar Siaran. Lihat Panduan Admin §6.
 - [ ] Tentukan siapa & kapan memeriksa Kotak Keluar (mis. pukul 10.00 & 15.00)
 - [ ] Impor kontak wali (.vcf) ke ponsel tsb → buat Daftar Siaran per kelas
 
+**Notifikasi aplikasi (Web Push — otomatis & gratis, di mode apa pun):**
+
+- [ ] `npx web-push generate-vapid-keys` → isi `NEXT_PUBLIC_VAPID_PUBLIC_KEY`,
+      `VAPID_PRIVATE_KEY` (rahasia), `VAPID_SUBJECT=mailto:…`. **Jangan** pakai
+      kunci dev dari `.env.local`. Mengganti kunci kelak = semua wali harus
+      mengaktifkan ulang notifikasi.
+- [ ] Uji: wali (Chrome Android) → Akun → **Aktifkan notifikasi** → setujui
+      satu pembayarannya → notifikasi muncul ≤ 5 menit (jadwal worker)
+- [ ] Sampaikan ke wali pengguna iPhone: pasang aplikasi ke **Layar Utama**
+      dulu (iOS 16.4+), baru notifikasi bisa diaktifkan
+
 **Mode gateway (otomatis — WAHA, self-hosted):** setelah ada nomor khusus.
 Panduan lengkap: `docs/SETUP-GATEWAY-WA.md`.
 
@@ -104,7 +115,7 @@ Panduan lengkap: `docs/SETUP-GATEWAY-WA.md`.
 
 ## 6. Verifikasi keamanan
 
-- [ ] `npm run pentest` → **52/52 lulus**
+- [ ] `npm run pentest` → **56/56 lulus**
 - [ ] `npm run backup:drill` → lulus, simpan dump ke storage terenkripsi terpisah
 - [ ] Cek header: `curl -I https://APLIKASI` → CSP ber-nonce, HSTS, X-Frame-Options
 - [ ] Pastikan bukti transfer **tidak** bisa diakses tanpa signed URL

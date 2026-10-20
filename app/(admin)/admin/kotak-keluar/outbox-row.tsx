@@ -15,6 +15,8 @@ export type OutboxItem = {
   lastError: string | null;
   waktu: string;
   tautan: string;
+  /** Wali sudah menerima notifikasi aplikasi (push) untuk pesan ini. */
+  punyaPush: boolean;
 };
 
 /**
@@ -54,6 +56,12 @@ export function OutboxRow({ item }: { item: OutboxItem }) {
 
       <p className="whitespace-pre-line rounded-md bg-background p-3 text-sm">{item.body}</p>
 
+      {item.punyaPush && (
+        <p className="text-xs text-emerald-700 dark:text-emerald-300">
+          📲 Wali ini sudah menerima notifikasi aplikasi — WhatsApp boleh dilewati.
+        </p>
+      )}
+
       {item.status === "dead" && item.lastError && (
         <p className="text-xs text-red-600 dark:text-red-400">
           Gateway gagal: {item.lastError}
@@ -66,7 +74,7 @@ export function OutboxRow({ item }: { item: OutboxItem }) {
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => setDibuka(true)}
-          className="inline-flex h-9 items-center gap-2 rounded-md bg-emerald-600 px-3 text-sm font-medium text-white hover:bg-emerald-700"
+          className="inline-flex h-9 items-center gap-2 rounded-md bg-emerald-700 px-3 text-sm font-medium text-white hover:bg-emerald-800"
         >
           <MessageCircle className="h-4 w-4" aria-hidden />
           Buka WhatsApp

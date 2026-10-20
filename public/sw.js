@@ -107,6 +107,47 @@ self.addEventListener("fetch", (event) => {
   }
 });
 
+// ── Web Push ────────────────────────────────────────────────────────────────
+// Muatan dari server: { title, body, url }. url HANYA path internal — tautan
+// ke situs luar ditolak agar notifikasi tak bisa dipakai untuk phishing.
+function urlInternal(url) {
+  return typeof url === "string" && url.startsWith("/") && !url.startsWith("//")
+    ? url
+    : "/beranda";
+}
+
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { body: event.data ? event.data.text() : "" };
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || "ArtaSchool Pay", {
+      body: data.body || "",
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      data: { url: urlInternal(data.url) },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const tujuan = new URL(urlInternal(event.notification.data?.url), self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((jendela) => {
+      for (const w of jendela) {
+        if (w.url.startsWith(self.location.origin) && "focus" in w) {
+          return w.navigate(tujuan).then((x) => (x ?? w).focus());
+        }
+      }
+      return self.clients.openWindow(tujuan);
+    }),
+  );
+});
+
 // Logout / ganti akun → buang seluruh jejak halaman di perangkat.
 // Halaman offline dipasang ulang setelahnya: ia hanya ditambahkan saat
 // `install`, sehingga tanpa ini pengguna offline pasca-logout akan menerima

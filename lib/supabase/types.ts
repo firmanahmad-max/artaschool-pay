@@ -381,6 +381,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"push_subscriptions": {
+                  Row: {
+                    "auth": string,"created_at": string,"endpoint": string,"guardian_id": string,"id": string,"last_success_at": string | null,"p256dh": string,"school_id": string,"user_agent": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "auth": string,"created_at"?: string,"endpoint": string,"guardian_id": string,"id"?: string,"last_success_at"?: string | null,"p256dh": string,"school_id": string,"user_agent"?: string | null
+                  }
+                  Update: {
+                    "auth"?: string,"created_at"?: string,"endpoint"?: string,"guardian_id"?: string,"id"?: string,"last_success_at"?: string | null,"p256dh"?: string,"school_id"?: string,"user_agent"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "push_subscriptions_guardian_id_fkey"
+      columns: ["guardian_id"]
+isOneToOne: false
+      referencedRelation: "guardians"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "push_subscriptions_school_id_fkey"
+      columns: ["school_id"]
+isOneToOne: false
+      referencedRelation: "schools"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"rate_limits": {
                   Row: {
                     "bucket": string,"hit_at": string,"id": number
@@ -508,6 +534,9 @@ isOneToOne: false
 "delete_my_guardian_account":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"delete_push_subscription":
+{ Args: { "p_endpoint": string }; Returns: undefined
+                           },
 "enqueue_daily_digest":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
@@ -544,6 +573,9 @@ isOneToOne: false
 "my_pin_is_set":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"outbox_guardians_with_push":
+{ Args: Record<PropertyKey, never>; Returns: string[]
+                           },
 "preview_promotion":
 { Args: { "p_from_year": string,"p_to_year": string }; Returns: {
               "from_class_id": string,"from_grade": number,"from_label": string,"graduates": boolean,"student_count": number,"to_class_exists": boolean,"to_grade": number,"to_label": string
@@ -560,6 +592,9 @@ isOneToOne: false
                            },
 "review_payment":
 { Args: { "p_action": string,"p_note": string,"p_payment_id": string }; Returns: undefined
+                           },
+"save_push_subscription":
+{ Args: { "p_auth": string,"p_endpoint": string,"p_p256dh": string,"p_user_agent"?: string }; Returns: undefined
                            },
 "skip_notification":
 { Args: { "p_id": number }; Returns: undefined

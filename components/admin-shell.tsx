@@ -100,7 +100,7 @@ export function AdminShell({
                 <Icon className="h-4 w-4" aria-hidden />
                 {label}
                 {badge && kotakKeluar > 0 && (
-                  <span className="ml-auto rounded-full bg-amber-500 px-2 py-0.5 text-xs font-semibold text-white">
+                  <span className="ml-auto rounded-full bg-amber-500 px-2 py-0.5 text-xs font-semibold text-amber-950">
                     {kotakKeluar}
                   </span>
                 )}
@@ -126,7 +126,7 @@ export function AdminShell({
               >
                 <Bell className="h-5 w-5" aria-hidden />
                 {kotakKeluar > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 min-w-[1.25rem] rounded-full bg-amber-500 px-1 text-center text-[0.65rem] font-semibold leading-5 text-white">
+                  <span className="absolute -right-0.5 -top-0.5 min-w-[1.25rem] rounded-full bg-amber-500 px-1 text-center text-[0.65rem] font-semibold leading-5 text-amber-950">
                     {kotakKeluar > 99 ? "99+" : kotakKeluar}
                   </span>
                 )}
