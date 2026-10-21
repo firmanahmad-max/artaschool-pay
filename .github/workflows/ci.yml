@@ -8,7 +8,7 @@ on:
 jobs:
   quality:
     name: Lint, typecheck & build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -24,7 +24,7 @@ jobs:
   # supaya perlindungan yang sudah dibangun tidak diam-diam rusak.
   jaring-pengaman:
     name: Privasi (UU PDP) & aksesibilitas
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -43,7 +43,7 @@ jobs:
 
   database:
     name: Validasi skema PostgreSQL 16
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:16
