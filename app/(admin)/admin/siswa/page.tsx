@@ -95,8 +95,12 @@ export default async function SiswaPage() {
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <CardTitle className="text-base">Daftar siswa ({students.length})</CardTitle>
+          {/* Unduhan berkas dari route handler, bukan halaman — <Link> akan
+              mencoba navigasi klien. Lint keliru mencocokkannya dgn [id]. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a
             href="/admin/siswa/export"
+            download
             className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
           >
             <Download className="h-4 w-4" aria-hidden />

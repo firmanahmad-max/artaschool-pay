@@ -28,6 +28,12 @@ const POLA: Pola[] = [
   { re: /\b(bearer\s+|apikey[=:\s]+)[A-Za-z0-9._-]{10,}/gi, ganti: "$1[disamarkan]" },
   // JWT
   { re: /\beyJ[A-Za-z0-9._-]{10,}/g, ganti: "[jwt]" },
+  // Query string pada URL absolut maupun relatif — mis. /admin/verifikasi?cari=
+  // <nama siswa>. Terbukti lolos ke request.url event Sentry (uji 2026-10).
+  {
+    re: /((?:https?:\/\/[^\s"'?#]+)|(?:\/[\w\-.~%/[\]]*))\?[^\s"'#]+/g,
+    ganti: "$1?[query]",
+  },
 ];
 
 /** Kunci yang isinya selalu dibuang, apa pun nilainya. */
@@ -63,7 +69,7 @@ export function samarkanObjek<T>(nilai: T, kedalaman = 0): T {
 
 /**
  * beforeSend Sentry: buang identitas pengguna, lalu samarkan seluruh isi
- * laporan. Dipakai bersama `sendDefaultPii: false`.
+ * laporan. Lapis kedua di belakang `PENGUMPULAN_DATA_MINIMAL` (dataCollection).
  */
 export function saringEventSentry<T>(event: T): T {
   const bersih = samarkanObjek(event);
@@ -77,7 +83,32 @@ export function saringEventSentry<T>(event: T): T {
       delete req.cookies;
       delete req.headers;
       delete req.data;
+      delete req.query_string;
+      delete req.env; // memuat REMOTE_ADDR (IP) pada sebagian integrasi
     }
   }
   return bersih;
 }
+
+/**
+ * Pengumpulan data Sentry seminimal mungkin (UU PDP — PRD §8).
+ *
+ * @sentry/nextjs v11 menghapus `sendDefaultPii: false` dan menggantinya dengan
+ * `dataCollection` yang DEFAULT-nya mengumpulkan semuanya: cookie, header,
+ * query string, body request (= body Server Action berisi PIN & kode
+ * aktivasi), nilai VARIABEL LOKAL di stack frame, data query DB, dan info
+ * user. Semua dimatikan di sini; penyaring di atas tetap menjadi lapis kedua.
+ * Dipakai bersama oleh sentry.server.config.ts & sentry.edge.config.ts.
+ */
+export const PENGUMPULAN_DATA_MINIMAL = {
+  userInfo: false,
+  cookies: false,
+  httpHeaders: false,
+  httpBodies: [] as never[],
+  urlQueryParams: false,
+  databaseQueryData: false,
+  queues: false,
+  stackFrameVariables: false,
+  graphQL: { document: false, variables: false },
+  genAI: { inputs: false, outputs: false },
+} as const;

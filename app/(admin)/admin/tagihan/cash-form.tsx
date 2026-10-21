@@ -1,9 +1,9 @@
 "use client";
 
 import { Banknote } from "lucide-react";
-import { useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { AksiForm, useStatusAksi } from "@/components/ui/aksi-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -13,7 +13,7 @@ import { formatRupiah } from "@/lib/utils";
 type Bill = { id: string; label: string; remaining: number };
 
 function SubmitButton({ disabled }: { disabled: boolean }) {
-  const { pending } = useFormStatus();
+  const { pending } = useStatusAksi();
   return (
     <Button type="submit" disabled={pending || disabled}>
       <Banknote className="h-4 w-4" aria-hidden />
@@ -31,7 +31,7 @@ export function CashPaymentForm({
   studentName: string;
   bills: Bill[];
 }) {
-  const [state, action] = useFormState(recordCashPayment, null);
+  const [state, action] = useActionState(recordCashPayment, null);
   // Pra-isi penuh setiap tagihan; admin bisa mengurangi untuk bayar sebagian
   const [alloc, setAlloc] = useState<Record<string, string>>(() =>
     Object.fromEntries(bills.map((b) => [b.id, String(b.remaining)])),
@@ -43,7 +43,7 @@ export function CashPaymentForm({
   }, 0);
 
   return (
-    <form action={action} className="space-y-4">
+    <AksiForm action={action} className="space-y-4">
       <input type="hidden" name="student_id" value={studentId} />
 
       {bills.length === 0 ? (
@@ -117,6 +117,6 @@ export function CashPaymentForm({
       )}
 
       <SubmitButton disabled={total <= 0} />
-    </form>
+    </AksiForm>
   );
 }

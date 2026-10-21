@@ -12,10 +12,11 @@ import { VerifyForm } from "./verify-form";
 export const metadata: Metadata = { title: "Periksa Pembayaran" };
 
 export default async function PeriksaPembayaranPage({
-  params,
+  params: paramsPromise,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const params = await paramsPromise;
   await requireAdmin(); // semua role admin boleh MELIHAT; aksi dibatasi RPC
   const detail = await getPaymentDetail(params.id);
   if (!detail) notFound();

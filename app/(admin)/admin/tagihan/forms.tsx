@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { AksiForm, useStatusAksi } from "@/components/ui/aksi-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -22,7 +22,7 @@ type PaymentType = {
 type StudentOption = { id: string; nis: string; full_name: string };
 
 function SubmitButton({ children }: { children: React.ReactNode }) {
-  const { pending } = useFormStatus();
+  const { pending } = useStatusAksi();
   return (
     <Button type="submit" disabled={pending}>
       {pending ? "Memproses…" : children}
@@ -47,9 +47,9 @@ function Feedback({ state }: { state: { ok: boolean; error?: string; message?: s
 }
 
 export function PaymentTypeForm() {
-  const [state, action] = useFormState(createPaymentType, null);
+  const [state, action] = useActionState(createPaymentType, null);
   return (
-    <form action={action} className="flex flex-wrap items-end gap-3">
+    <AksiForm action={action} className="flex flex-wrap items-end gap-3">
       <div className="space-y-2">
         <Label htmlFor="name">Nama</Label>
         <Input id="name" name="name" placeholder="SPP" required className="w-40" />
@@ -73,18 +73,18 @@ export function PaymentTypeForm() {
       </label>
       <SubmitButton>Tambah Jenis</SubmitButton>
       <Feedback state={state} />
-    </form>
+    </AksiForm>
   );
 }
 
 export function GenerateBillsForm({ types }: { types: PaymentType[] }) {
-  const [state, action] = useFormState(generateBills, null);
+  const [state, action] = useActionState(generateBills, null);
   const [selectedId, setSelectedId] = useState(types[0]?.id ?? "");
   const selected = types.find((t) => t.id === selectedId);
   const recurring = selected?.is_recurring ?? false;
 
   return (
-    <form action={action} className="space-y-4">
+    <AksiForm action={action} className="space-y-4">
       <input type="hidden" name="is_recurring" value={String(recurring)} />
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-2">
@@ -120,7 +120,7 @@ export function GenerateBillsForm({ types }: { types: PaymentType[] }) {
         <SubmitButton>Generate untuk Semua Siswa Aktif</SubmitButton>
         <Feedback state={state} />
       </div>
-    </form>
+    </AksiForm>
   );
 }
 
@@ -131,9 +131,9 @@ export function IndividualBillForm({
   types: PaymentType[];
   students: StudentOption[];
 }) {
-  const [state, action] = useFormState(createIndividualBill, null);
+  const [state, action] = useActionState(createIndividualBill, null);
   return (
-    <form action={action} className="space-y-4">
+    <AksiForm action={action} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="ind_student">Siswa</Label>
@@ -174,12 +174,12 @@ export function IndividualBillForm({
         <SubmitButton>Buat Tagihan Individual</SubmitButton>
         <Feedback state={state} />
       </div>
-    </form>
+    </AksiForm>
   );
 }
 
 export function WaiveBillForm({ billId }: { billId: string }) {
-  const [state, action] = useFormState(waiveBill, null);
+  const [state, action] = useActionState(waiveBill, null);
   const [open, setOpen] = useState(false);
 
   if (!open) {
@@ -190,7 +190,7 @@ export function WaiveBillForm({ billId }: { billId: string }) {
     );
   }
   return (
-    <form action={action} className="flex items-center gap-2">
+    <AksiForm action={action} className="flex items-center gap-2">
       <input type="hidden" name="bill_id" value={billId} />
       <Input name="note" placeholder="Alasan (wajib)" required className="h-9 w-44" autoFocus />
       <Button type="submit" size="sm" variant="outline">
@@ -204,6 +204,6 @@ export function WaiveBillForm({ billId }: { billId: string }) {
           {state.error}
         </span>
       )}
-    </form>
+    </AksiForm>
   );
 }

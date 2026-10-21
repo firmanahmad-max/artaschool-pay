@@ -17,7 +17,7 @@ type PaymentRow = {
 
 /** Ambil pembayaran + info siswa/kelas aktif; dasar dashboard & laporan. */
 async function fetchPayments(sinceIso?: string): Promise<PaymentRow[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   let query = supabase
     .from("payments")
     .select(
@@ -50,7 +50,7 @@ async function fetchPayments(sinceIso?: string): Promise<PaymentRow[]> {
 
 /** Tunggakan per siswa (tagihan unpaid/partial tahun ajaran aktif). */
 export async function getArrearsRows() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("bills")
     .select(
@@ -81,7 +81,7 @@ export async function getArrearsRows() {
 
 /** Ringkasan + data grafik untuk dashboard admin (PRD §7.2). */
 export async function getDashboardData() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const since = new Date();
   since.setDate(since.getDate() - 29);
   since.setHours(0, 0, 0, 0);
@@ -190,7 +190,7 @@ export async function getAuditLogs(filter: {
   from?: string;
   to?: string;
 }) {
-  const supabase = createClient();
+  const supabase = await createClient();
   let query = supabase
     .from("audit_logs")
     .select("id, action, actor_role, entity, entity_id, after, created_at")

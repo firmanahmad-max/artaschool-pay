@@ -12,10 +12,11 @@ import { PromotionForm } from "./promotion-form";
 export const metadata: Metadata = { title: "Wizard Naik Kelas" };
 
 export default async function NaikKelasPage({
-  searchParams,
+  searchParams: searchParamsPromise,
 }: {
-  searchParams: { ke?: string };
+  searchParams: Promise<{ ke?: string }>;
 }) {
+  const searchParams = await searchParamsPromise;
   await requireAdmin(["super_admin", "operator"]);
 
   const [activeYear, years] = await Promise.all([
@@ -26,7 +27,7 @@ export default async function NaikKelasPage({
 
   const target = years.find((y) => y.id === searchParams.ke && y.id !== activeYear.id);
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: preview } = target
     ? await supabase.rpc("preview_promotion", {
         p_from_year: activeYear.id,

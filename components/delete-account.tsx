@@ -1,9 +1,9 @@
 "use client";
 
 import { Trash2, TriangleAlert } from "lucide-react";
-import { useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { AksiForm, useStatusAksi } from "@/components/ui/aksi-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -12,7 +12,7 @@ import {
 } from "@/modules/auth/actions";
 
 function ConfirmButton() {
-  const { pending } = useFormStatus();
+  const { pending } = useStatusAksi();
   return (
     <Button
       type="submit"
@@ -33,7 +33,7 @@ function ConfirmButton() {
  * worker dibersihkan (ponsel keluarga kerap dipakai bergantian).
  */
 export function DeleteAccountSection() {
-  const [state, action] = useFormState<ActionResult | null, FormData>(
+  const [state, action] = useActionState<ActionResult | null, FormData>(
     deleteMyGuardianAccount,
     null,
   );
@@ -67,7 +67,7 @@ export function DeleteAccountSection() {
         </div>
       </div>
 
-      <form
+      <AksiForm
         action={action}
         onSubmit={() => {
           navigator.serviceWorker?.controller?.postMessage("bersihkan-cache");
@@ -105,7 +105,7 @@ export function DeleteAccountSection() {
             Batal
           </Button>
         </div>
-      </form>
+      </AksiForm>
     </div>
   );
 }

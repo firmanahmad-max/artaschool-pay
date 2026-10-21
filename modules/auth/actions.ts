@@ -72,7 +72,7 @@ export async function requestParentOtp(
     };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({ phone });
   if (error) {
     return { ok: false, error: "Gagal mengirim kode OTP. Coba beberapa saat lagi." };
@@ -93,7 +93,7 @@ export async function verifyParentOtp(
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.auth.verifyOtp({
     phone: parsed.data.phone,
     token: parsed.data.token,
@@ -131,7 +131,7 @@ export async function loginAdmin(
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: signIn, error } = await supabase.auth.signInWithPassword(
     parsed.data,
   );
@@ -157,7 +157,7 @@ export async function loginAdmin(
 
 /** Keluar dari sesi; kembali ke halaman login yang sesuai. */
 export async function logout(target: "parent" | "admin") {
-  const supabase = createClient();
+  const supabase = await createClient();
   await supabase.auth.signOut();
   redirect(target === "admin" ? "/admin/login" : "/login");
 }
@@ -181,7 +181,7 @@ export async function updateMyGuardianProfile(
     };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.rpc("update_my_guardian_profile", {
     p_full_name: parsed.data.full_name,
     p_email: parsed.data.email ?? "",
@@ -211,7 +211,7 @@ export async function deleteMyGuardianAccount(
     return { ok: false, error: "Ketik HAPUS untuk mengonfirmasi." };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

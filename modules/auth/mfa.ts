@@ -22,7 +22,7 @@ export async function startMfaEnrollment(): Promise<
   { ok: true; data: EnrollData } | { ok: false; error: string }
 > {
   await requireAdminBasic();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Bersihkan faktor menggantung dari percobaan sebelumnya
   const { data: existing } = await supabase.auth.mfa.listFactors();
@@ -63,7 +63,7 @@ export async function confirmMfaEnrollment(
     return { ok: false, error: "Kode terdiri dari 6 angka." };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: challenge, error: chErr } = await supabase.auth.mfa.challenge({
     factorId,
   });
@@ -98,7 +98,7 @@ export async function verifyMfaLogin(
     return { ok: false, error: "Kode terdiri dari 6 angka." };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: factors } = await supabase.auth.mfa.listFactors();
   const totp = factors?.totp?.[0];
   if (!totp) {
@@ -129,7 +129,7 @@ export async function verifyMfaLogin(
 export async function unenrollMfa(formData: FormData): Promise<void> {
   await requireAdminBasic();
   const factorId = String(formData.get("factor_id") ?? "");
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.auth.mfa.unenroll({ factorId });
   if (!error) {
     await supabase.rpc("log_audit", {

@@ -1,13 +1,14 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
+import { AksiForm, useStatusAksi } from "@/components/ui/aksi-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { verifyMfaLogin } from "@/modules/auth/mfa";
 
 function SubmitButton() {
-  const { pending } = useFormStatus();
+  const { pending } = useStatusAksi();
   return (
     <Button type="submit" className="w-full" disabled={pending}>
       {pending ? "Memverifikasi…" : "Verifikasi"}
@@ -16,7 +17,7 @@ function SubmitButton() {
 }
 
 export function MfaVerifyForm() {
-  const [state, action] = useFormState(verifyMfaLogin, null);
+  const [state, action] = useActionState(verifyMfaLogin, null);
 
   // Sesi sudah naik ke aal2 → muat ulang agar guard meloloskan
   if (state?.ok && typeof window !== "undefined") {
@@ -24,7 +25,7 @@ export function MfaVerifyForm() {
   }
 
   return (
-    <form action={action} className="space-y-4">
+    <AksiForm action={action} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="code">Kode dari aplikasi authenticator</Label>
         <Input
@@ -46,6 +47,6 @@ export function MfaVerifyForm() {
         </p>
       )}
       <SubmitButton />
-    </form>
+    </AksiForm>
   );
 }

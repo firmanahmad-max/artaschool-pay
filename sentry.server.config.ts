@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import { saringEventSentry } from "@/lib/sentry-scrub";
+import { PENGUMPULAN_DATA_MINIMAL, saringEventSentry } from "@/lib/sentry-scrub";
 
 /**
  * Monitoring sisi server (PRD §3.2). Tanpa `SENTRY_DSN` seluruh blok ini
@@ -13,9 +13,11 @@ if (dsn) {
     environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV,
     // Cuplikan performa kecil saja; yang dicari adalah error, bukan profil
     tracesSampleRate: 0.1,
-    // JANGAN kirim IP/cookie/header pengguna (UU PDP — PRD §8)
-    sendDefaultPii: false,
+    // JANGAN kumpulkan cookie/header/query/body/variabel lokal (UU PDP — PRD §8).
+    // Pengganti `sendDefaultPii: false` sejak @sentry/nextjs v11.
+    dataCollection: PENGUMPULAN_DATA_MINIMAL,
     beforeSend: (event) => saringEventSentry(event),
+    beforeSendTransaction: (event) => saringEventSentry(event),
     beforeBreadcrumb: (breadcrumb) => saringEventSentry(breadcrumb),
   });
 }

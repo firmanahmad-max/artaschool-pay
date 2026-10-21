@@ -12,10 +12,11 @@ import { getParentPaymentDetail } from "@/modules/payments/queries";
 export const metadata: Metadata = { title: "Detail Pembayaran" };
 
 export default async function DetailPembayaranPage({
-  params,
+  params: paramsPromise,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const params = await paramsPromise;
   await requireGuardian();
   const p = await getParentPaymentDetail(params.id);
   if (!p) notFound();

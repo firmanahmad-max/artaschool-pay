@@ -99,7 +99,7 @@ export async function submitPayment(formData: FormData): Promise<SubmitResult> {
   }
 
   // Insert payment via sesi wali (auth.uid() terisi) → RPC validasi kepemilikan.
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error: rpcError } = await supabase.rpc("submit_payment", {
     p_payment_id: paymentId,
     p_student_id: studentId,
@@ -127,7 +127,7 @@ export async function getProofSignedUrl(
   paymentId: string,
 ): Promise<string | null> {
   const guardian = await requireGuardian();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // RLS memastikan wali hanya melihat pembayaran anaknya
   const { data: payment } = await supabase

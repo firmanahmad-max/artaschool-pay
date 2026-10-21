@@ -42,7 +42,7 @@ export async function recordCashPayment(
   }
   const total = allocations.reduce((s, a) => s + a.amount, 0);
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.rpc("record_cash_payment", {
     p_student_id: studentId,
     p_amount: total,

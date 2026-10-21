@@ -1,14 +1,15 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
+import { AksiForm, useStatusAksi } from "@/components/ui/aksi-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { loginAdmin } from "@/modules/auth/actions";
 
 function SubmitButton() {
-  const { pending } = useFormStatus();
+  const { pending } = useStatusAksi();
   return (
     <Button type="submit" className="w-full" disabled={pending}>
       {pending ? "Memproses…" : "Masuk"}
@@ -17,7 +18,7 @@ function SubmitButton() {
 }
 
 export function AdminLoginForm() {
-  const [state, action] = useFormState(loginAdmin, null);
+  const [state, action] = useActionState(loginAdmin, null);
 
   return (
     <Card>
@@ -28,7 +29,7 @@ export function AdminLoginForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form action={action} className="space-y-4">
+        <AksiForm action={action} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -56,7 +57,7 @@ export function AdminLoginForm() {
             </p>
           )}
           <SubmitButton />
-        </form>
+        </AksiForm>
       </CardContent>
     </Card>
   );

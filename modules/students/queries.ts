@@ -2,7 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 
 export async function getAcademicYears() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("academic_years")
     .select("id, name, is_active, starts_on, ends_on")
@@ -11,7 +11,7 @@ export async function getAcademicYears() {
 }
 
 export async function getActiveYear() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("academic_years")
     .select("id, name")
@@ -21,7 +21,7 @@ export async function getActiveYear() {
 }
 
 export async function getClasses(yearId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("classes")
     .select("id, grade, label, class_enrollments(count)")
@@ -37,7 +37,7 @@ export async function getClasses(yearId: string) {
 }
 
 export async function getStudents() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("students")
     .select(
@@ -61,7 +61,7 @@ export async function getStudents() {
 }
 
 export async function getStudent(id: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("students")
     .select(

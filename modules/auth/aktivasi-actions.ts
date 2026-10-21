@@ -112,7 +112,7 @@ export async function activateGuardianAccount(
   });
   if (linkError) return { ok: false, error: "Gagal menautkan akun. Hubungi pihak sekolah." };
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error: signInError } = await supabase.auth.signInWithPassword({
     phone,
     password: pin,
@@ -143,7 +143,7 @@ export async function loginParentPin(
     return { ok: false, error: TERLALU_SERING };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ phone, password: pin });
   if (error) {
     // Sengaja satu pesan untuk "nomor tak dikenal" dan "PIN salah".
@@ -167,7 +167,7 @@ export async function changeMyPin(
   formData: FormData,
 ): Promise<ActionResult> {
   const guardian = await requireGuardian();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const baru = String(formData.get("pin_baru") ?? "");
   const ulang = String(formData.get("pin_ulang") ?? "");
@@ -208,9 +208,9 @@ export type KodeAktivasiResult =
   | { ok: true; kode: string; pesan: string; tautan: string; nama: string }
   | { ok: false; error: string };
 
-function urlDasarAplikasi(): string {
+async function urlDasarAplikasi(): Promise<string> {
   if (process.env.APP_URL) return process.env.APP_URL;
-  const h = headers();
+  const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
   const proto =
     h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
@@ -222,7 +222,7 @@ export async function issueActivationCodeAction(
   formData: FormData,
 ): Promise<KodeAktivasiResult> {
   const guardianId = String(formData.get("guardian_id") ?? "");
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: kode, error } = await supabase.rpc("issue_activation_code", {
     p_guardian_id: guardianId,
@@ -242,7 +242,7 @@ export async function issueActivationCodeAction(
   const pesan = pesanAktivasi({
     nama: guardian.full_name,
     kode,
-    urlAktivasi: urlAktivasi(urlDasarAplikasi()),
+    urlAktivasi: urlAktivasi(await urlDasarAplikasi()),
   });
   return {
     ok: true,

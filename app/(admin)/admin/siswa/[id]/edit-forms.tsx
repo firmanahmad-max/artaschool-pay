@@ -1,14 +1,15 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
+import { AksiForm, useStatusAksi } from "@/components/ui/aksi-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { addGuardianLink, updateStudent } from "@/modules/students/actions";
 
 function SubmitButton({ children }: { children: React.ReactNode }) {
-  const { pending } = useFormStatus();
+  const { pending } = useStatusAksi();
   return (
     <Button type="submit" disabled={pending}>
       {pending ? "Menyimpan…" : children}
@@ -35,9 +36,9 @@ export function EditStudentForm({
   student: { id: string; nis: string; full_name: string; activeClassId: string };
   classes: { id: string; label: string }[];
 }) {
-  const [state, action] = useFormState(updateStudent, null);
+  const [state, action] = useActionState(updateStudent, null);
   return (
-    <form action={action} className="space-y-4">
+    <AksiForm action={action} className="space-y-4">
       <input type="hidden" name="student_id" value={student.id} />
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-2">
@@ -66,14 +67,14 @@ export function EditStudentForm({
         <SubmitButton>Simpan Perubahan</SubmitButton>
         <ActionState state={state} />
       </div>
-    </form>
+    </AksiForm>
   );
 }
 
 export function AddGuardianForm({ studentId }: { studentId: string }) {
-  const [state, action] = useFormState(addGuardianLink, null);
+  const [state, action] = useActionState(addGuardianLink, null);
   return (
-    <form action={action} className="flex flex-wrap items-end gap-3">
+    <AksiForm action={action} className="flex flex-wrap items-end gap-3">
       <input type="hidden" name="student_id" value={studentId} />
       <div className="space-y-2">
         <Label htmlFor="guardian_name">Nama wali</Label>
@@ -93,6 +94,6 @@ export function AddGuardianForm({ studentId }: { studentId: string }) {
       </div>
       <SubmitButton>Tautkan Wali</SubmitButton>
       <ActionState state={state} />
-    </form>
+    </AksiForm>
   );
 }

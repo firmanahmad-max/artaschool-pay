@@ -7,7 +7,7 @@ export async function getVerificationQueue(filter: {
   status?: string;
   cari?: string;
 }) {
-  const supabase = createClient();
+  const supabase = await createClient();
   let query = supabase
     .from("payments")
     .select(
@@ -47,7 +47,7 @@ export type OpenBill = {
 
 /** Detail pembayaran utk panel verifikasi + tagihan terbuka + riwayat siswa. */
 export async function getPaymentDetail(paymentId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: p } = await supabase
     .from("payments")

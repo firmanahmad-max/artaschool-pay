@@ -19,10 +19,11 @@ const FILTERS: { value: string; label: string }[] = [
 ];
 
 export default async function RiwayatPage({
-  searchParams,
+  searchParams: searchParamsPromise,
 }: {
-  searchParams: { status?: string };
+  searchParams: Promise<{ status?: string }>;
 }) {
+  const searchParams = await searchParamsPromise;
   const guardian = await requireGuardian();
   const all = await getPaymentHistory(guardian.id);
   const active = searchParams.status ?? "";

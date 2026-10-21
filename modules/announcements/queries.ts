@@ -9,7 +9,7 @@ function readAudience(raw: unknown): Audience {
 
 /** Daftar pengumuman untuk admin (semua, termasuk terjadwal & kedaluwarsa). */
 export async function getAnnouncementsForAdmin() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("announcements")
     .select("id, title, body, audience, publish_at, expires_at, created_at")
@@ -32,7 +32,7 @@ export async function getAnnouncementsForAdmin() {
 
 /** Ringkasan antrean notifikasi untuk monitor admin. */
 export async function getNotificationSummary() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("notification_jobs")
     .select("id, status, template, recipient_phone, body, attempts, last_error, created_at")
@@ -53,7 +53,7 @@ export async function getNotificationSummary() {
  * & jendela publikasi; penyaringan audiens dilakukan di sini.
  */
 export async function getAnnouncementsForGuardian(guardianId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: links } = await supabase
     .from("guardian_students")

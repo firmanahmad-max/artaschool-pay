@@ -11,10 +11,11 @@ import { UploadForm } from "./upload-form";
 export const metadata: Metadata = { title: "Upload Pembayaran" };
 
 export default async function UploadPage({
-  searchParams,
+  searchParams: searchParamsPromise,
 }: {
-  searchParams: { anak?: string; revisi?: string };
+  searchParams: Promise<{ anak?: string; revisi?: string }>;
 }) {
+  const searchParams = await searchParamsPromise;
   const guardian = await requireGuardian();
   const [children, bankAccounts, resubmit] = await Promise.all([
     getChildrenWithBills(guardian.id),

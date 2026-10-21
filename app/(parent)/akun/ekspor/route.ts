@@ -9,7 +9,7 @@ import { requireGuardian } from "@/modules/auth/guards";
 export async function GET() {
   await requireGuardian(); // redirect ke /login bila bukan sesi wali
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.rpc("export_my_guardian_data");
   if (error || !data) {
     return new Response(

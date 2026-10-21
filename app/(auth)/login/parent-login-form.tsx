@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { AksiForm, useStatusAksi } from "@/components/ui/aksi-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +19,7 @@ import {
 type Mode = "pin" | "aktivasi" | "otp";
 
 function SubmitButton({ children }: { children: React.ReactNode }) {
-  const { pending } = useFormStatus();
+  const { pending } = useStatusAksi();
   return (
     <Button type="submit" className="w-full" disabled={pending}>
       {pending ? "Memproses…" : children}
@@ -123,10 +123,10 @@ export function ParentLoginForm({
 }) {
   const [mode, setMode] = useState<Mode>(awal);
   const [phone, setPhone] = useState("");
-  const [pinState, pinAction] = useFormState(loginParentPin, null);
-  const [aktivasiState, aktivasiAction] = useFormState(activateGuardianAccount, null);
-  const [requestState, requestAction] = useFormState(requestParentOtp, null);
-  const [verifyState, verifyAction] = useFormState(verifyParentOtp, null);
+  const [pinState, pinAction] = useActionState(loginParentPin, null);
+  const [aktivasiState, aktivasiAction] = useActionState(activateGuardianAccount, null);
+  const [requestState, requestAction] = useActionState(requestParentOtp, null);
+  const [verifyState, verifyAction] = useActionState(verifyParentOtp, null);
   const otpSent = requestState?.ok === true;
 
   const judul =
@@ -148,16 +148,16 @@ export function ParentLoginForm({
       </CardHeader>
       <CardContent className="space-y-4">
         {mode === "pin" && (
-          <form action={pinAction} className="space-y-4">
+          <AksiForm action={pinAction} className="space-y-4">
             <PhoneField phone={phone} setPhone={setPhone} />
             <PinField id="pin" name="pin" label="PIN (6 angka)" autoComplete="current-password" />
             <ErrorText result={pinState} />
             <SubmitButton>Masuk</SubmitButton>
-          </form>
+          </AksiForm>
         )}
 
         {mode === "aktivasi" && (
-          <form action={aktivasiAction} className="space-y-4">
+          <AksiForm action={aktivasiAction} className="space-y-4">
             <PhoneField phone={phone} setPhone={setPhone} />
             <div className="space-y-2">
               <Label htmlFor="kode">Kode aktivasi</Label>
@@ -179,18 +179,18 @@ export function ParentLoginForm({
             </p>
             <ErrorText result={aktivasiState} />
             <SubmitButton>Aktifkan &amp; Masuk</SubmitButton>
-          </form>
+          </AksiForm>
         )}
 
         {mode === "otp" &&
           (!otpSent ? (
-            <form action={requestAction} className="space-y-4">
+            <AksiForm action={requestAction} className="space-y-4">
               <PhoneField phone={phone} setPhone={setPhone} />
               <ErrorText result={requestState} />
               <SubmitButton>Kirim Kode OTP</SubmitButton>
-            </form>
+            </AksiForm>
           ) : (
-            <form action={verifyAction} className="space-y-4">
+            <AksiForm action={verifyAction} className="space-y-4">
               <input type="hidden" name="phone" value={phone} />
               <div className="space-y-2">
                 <Label htmlFor="token">Kode OTP (6 angka)</Label>
@@ -209,7 +209,7 @@ export function ParentLoginForm({
               </div>
               <ErrorText result={verifyState} />
               <SubmitButton>Masuk</SubmitButton>
-            </form>
+            </AksiForm>
           ))}
 
         <div className="space-y-2 border-t border-border pt-3">

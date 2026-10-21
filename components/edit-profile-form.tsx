@@ -1,8 +1,9 @@
 "use client";
 
 import { Save } from "lucide-react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
+import { AksiForm, useStatusAksi } from "@/components/ui/aksi-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -11,7 +12,7 @@ import {
 } from "@/modules/auth/actions";
 
 function SaveButton() {
-  const { pending } = useFormStatus();
+  const { pending } = useStatusAksi();
   return (
     <Button type="submit" size="sm" disabled={pending}>
       <Save className="h-4 w-4" aria-hidden />
@@ -30,13 +31,13 @@ export function EditProfileForm({
   email: string | null;
   phone: string;
 }) {
-  const [state, action] = useFormState<ActionResult | null, FormData>(
+  const [state, action] = useActionState<ActionResult | null, FormData>(
     updateMyGuardianProfile,
     null,
   );
 
   return (
-    <form action={action} className="space-y-4">
+    <AksiForm action={action} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="full_name">Nama</Label>
         <Input
@@ -86,6 +87,6 @@ export function EditProfileForm({
           </span>
         )}
       </div>
-    </form>
+    </AksiForm>
   );
 }

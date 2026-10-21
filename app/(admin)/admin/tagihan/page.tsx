@@ -33,10 +33,11 @@ const STATUS_OPTIONS = [
 ];
 
 export default async function TagihanPage({
-  searchParams,
+  searchParams: searchParamsPromise,
 }: {
-  searchParams: { status?: string; kelas?: string; jenis?: string; tunai?: string };
+  searchParams: Promise<{ status?: string; kelas?: string; jenis?: string; tunai?: string }>;
 }) {
+  const searchParams = await searchParamsPromise;
   const activeYear = await getActiveYear();
   const [types, students, classes, arrears, bills] = await Promise.all([
     getPaymentTypes(),

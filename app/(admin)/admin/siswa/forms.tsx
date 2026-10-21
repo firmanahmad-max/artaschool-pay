@@ -1,8 +1,9 @@
 "use client";
 
 import { Download, Upload } from "lucide-react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
+import { AksiForm, useStatusAksi } from "@/components/ui/aksi-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -15,7 +16,7 @@ import {
 type ClassOption = { id: string; label: string };
 
 function SubmitButton({ children }: { children: React.ReactNode }) {
-  const { pending } = useFormStatus();
+  const { pending } = useStatusAksi();
   return (
     <Button type="submit" disabled={pending}>
       {pending ? "Memproses…" : children}
@@ -33,9 +34,9 @@ function ActionError({ state }: { state: { ok: boolean; error?: string } | null 
 }
 
 export function ClassForm() {
-  const [state, action] = useFormState(createClass, null);
+  const [state, action] = useActionState(createClass, null);
   return (
-    <form action={action} className="flex flex-wrap items-end gap-3">
+    <AksiForm action={action} className="flex flex-wrap items-end gap-3">
       <div className="space-y-2">
         <Label htmlFor="grade">Tingkat</Label>
         <Select id="grade" name="grade" defaultValue="1" className="w-24">
@@ -52,12 +53,12 @@ export function ClassForm() {
       </div>
       <SubmitButton>Tambah Kelas</SubmitButton>
       <ActionError state={state} />
-    </form>
+    </AksiForm>
   );
 }
 
 export function StudentForm({ classes }: { classes: ClassOption[] }) {
-  const [state, action] = useFormState(createStudent, null);
+  const [state, action] = useActionState(createStudent, null);
 
   // Hari pertama tahun ajaran: belum ada kelas sama sekali. Tanpa penjelasan,
   // admin bingung kenapa siswa tidak bisa disimpan (PRD §2.2).
@@ -71,7 +72,7 @@ export function StudentForm({ classes }: { classes: ClassOption[] }) {
   }
 
   return (
-    <form action={action} className="space-y-4">
+    <AksiForm action={action} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-2">
           <Label htmlFor="nis">NIS</Label>
@@ -117,12 +118,12 @@ export function StudentForm({ classes }: { classes: ClassOption[] }) {
         <SubmitButton>Tambah Siswa</SubmitButton>
         <ActionError state={state} />
       </div>
-    </form>
+    </AksiForm>
   );
 }
 
 export function ImportForm() {
-  const [state, action] = useFormState(importStudents, null);
+  const [state, action] = useActionState(importStudents, null);
 
   function downloadErrorReport() {
     if (!state?.ok || state.errors.length === 0) return;
@@ -143,7 +144,7 @@ export function ImportForm() {
 
   return (
     <div className="space-y-4">
-      <form action={action} className="flex flex-wrap items-end gap-3">
+      <AksiForm action={action} className="flex flex-wrap items-end gap-3">
         <div className="space-y-2">
           <Label htmlFor="file">Berkas .xlsx</Label>
           <Input
@@ -167,7 +168,7 @@ export function ImportForm() {
           <Download className="h-4 w-4" aria-hidden />
           Unduh Template
         </Button>
-      </form>
+      </AksiForm>
 
       {state && !state.ok && (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">

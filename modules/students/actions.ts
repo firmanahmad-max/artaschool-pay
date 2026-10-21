@@ -38,7 +38,7 @@ export async function createAcademicYear(
   });
   if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("academic_years")
     .insert({ ...parsed.data, school_id: admin.school_id })
@@ -67,7 +67,7 @@ export async function createAcademicYear(
 export async function activateAcademicYear(formData: FormData): Promise<void> {
   await requireAdmin(MASTER_ROLES);
   const id = String(formData.get("id") ?? "");
-  const supabase = createClient();
+  const supabase = await createClient();
   await supabase.rpc("activate_academic_year", { p_year_id: id });
   revalidatePath("/admin/tahun-ajaran");
   revalidatePath("/admin/siswa");
@@ -76,7 +76,7 @@ export async function activateAcademicYear(formData: FormData): Promise<void> {
 // ── Kelas ────────────────────────────────────────────────────────────────────
 
 async function getActiveYearId(): Promise<string | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("academic_years")
     .select("id")
@@ -99,7 +99,7 @@ export async function createClass(
   const yearId = await getActiveYearId();
   if (!yearId) return { ok: false, error: "Belum ada tahun ajaran aktif." };
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("classes")
     .insert({
@@ -132,7 +132,7 @@ export async function createClass(
 export async function deleteClass(formData: FormData): Promise<void> {
   await requireAdmin(MASTER_ROLES);
   const id = String(formData.get("id") ?? "");
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from("classes").delete().eq("id", id);
   if (!error) {
     await supabase.rpc("log_audit", {
@@ -152,7 +152,7 @@ async function findOrCreateGuardian(
   name: string,
   phone: string,
 ): Promise<string | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: existing } = await supabase
     .from("guardians")
     .select("id")
@@ -194,7 +194,7 @@ export async function createStudent(
     }
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: student, error } = await supabase
     .from("students")
     .insert({
@@ -256,7 +256,7 @@ export async function updateStudent(
   });
   if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase
     .from("students")
     .update({ nis: parsed.data.nis, full_name: parsed.data.full_name })
@@ -306,7 +306,7 @@ export async function setStudentActive(formData: FormData): Promise<void> {
   await requireAdmin(MASTER_ROLES);
   const id = String(formData.get("id") ?? "");
   const active = formData.get("active") === "true";
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase
     .from("students")
     .update({ is_active: active })
@@ -344,7 +344,7 @@ export async function addGuardianLink(
   );
   if (!guardianId) return { ok: false, error: "Gagal menyimpan data wali." };
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from("guardian_students").insert({
     guardian_id: guardianId,
     student_id: studentId,
@@ -368,7 +368,7 @@ export async function removeGuardianLink(formData: FormData): Promise<void> {
   await requireAdmin(MASTER_ROLES);
   const studentId = String(formData.get("student_id") ?? "");
   const guardianId = String(formData.get("guardian_id") ?? "");
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase
     .from("guardian_students")
     .delete()
@@ -426,7 +426,7 @@ export async function importStudents(
   const yearId = await getActiveYearId();
   if (!yearId) return { ok: false, error: "Belum ada tahun ajaran aktif." };
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const [{ data: classes }, { data: existingStudents }] = await Promise.all([
     supabase.from("classes").select("id, label").eq("academic_year_id", yearId),
     supabase.from("students").select("nis"),

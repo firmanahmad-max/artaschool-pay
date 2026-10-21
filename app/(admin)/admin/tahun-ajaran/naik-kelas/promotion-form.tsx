@@ -1,12 +1,13 @@
 "use client";
 
 import { ArrowRight, GraduationCap } from "lucide-react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
+import { AksiForm, useStatusAksi } from "@/components/ui/aksi-form";
 import { runPromotion } from "@/modules/students/promotion";
 
 function SubmitButton({ disabled }: { disabled: boolean }) {
-  const { pending } = useFormStatus();
+  const { pending } = useStatusAksi();
   return (
     <Button type="submit" disabled={pending || disabled}>
       <ArrowRight className="h-4 w-4" aria-hidden />
@@ -26,10 +27,10 @@ export function PromotionForm({
   hasGraduates: boolean;
   canRun: boolean;
 }) {
-  const [state, action] = useFormState(runPromotion, null);
+  const [state, action] = useActionState(runPromotion, null);
 
   return (
-    <form action={action} className="space-y-4">
+    <AksiForm action={action} className="space-y-4">
       <input type="hidden" name="from_year" value={fromYear} />
       <input type="hidden" name="to_year" value={toYear} />
 
@@ -73,6 +74,6 @@ export function PromotionForm({
         Aman dijalankan ulang — siswa yang sudah terdaftar di kelas tujuan tidak
         akan diduplikasi.
       </p>
-    </form>
+    </AksiForm>
   );
 }

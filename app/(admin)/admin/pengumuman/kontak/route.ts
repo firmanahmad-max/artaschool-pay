@@ -29,7 +29,7 @@ export async function GET() {
     keterangan: `Wali ${e.anak.join(", ")}`,
   }));
 
-  await createClient().rpc("log_audit", {
+  await (await createClient()).rpc("log_audit", {
     p_action: "guardian.contacts_exported",
     p_entity: "guardian",
     p_after: { jumlah: kontak.length },

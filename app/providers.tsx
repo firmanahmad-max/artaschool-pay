@@ -6,7 +6,14 @@ import { useState } from "react";
 import { PwaProvider } from "@/components/pwa-provider";
 import { ThemeColorMeta } from "@/components/theme-color-meta";
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({
+  children,
+  nonce,
+}: {
+  children: React.ReactNode;
+  /** Nonce CSP per-request — skrip anti-kedip tema next-themes wajib membawanya. */
+  nonce?: string;
+}) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -17,7 +24,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem nonce={nonce}>
       <QueryClientProvider client={queryClient}>
         <ThemeColorMeta />
         <PwaProvider />

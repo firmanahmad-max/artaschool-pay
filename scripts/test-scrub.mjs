@@ -18,9 +18,8 @@ const js = transpileModule(ts, { compilerOptions: { module: ModuleKind.ESNext } 
 const dir = mkdtempSync(join(tmpdir(), "scrub-"));
 const file = join(dir, "scrub.mjs");
 writeFileSync(file, js);
-const { samarkanTeks, samarkanObjek, saringEventSentry } = await import(
-  "file://" + file.replace(/\\/g, "/")
-);
+const { samarkanTeks, samarkanObjek, saringEventSentry, PENGUMPULAN_DATA_MINIMAL } =
+  await import("file://" + file.replace(/\\/g, "/"));
 
 let lulus = 0;
 const gagal = [];
@@ -112,6 +111,54 @@ else { gagal.push({ nama: "pesan diagnostik", hasil: berguna }); console.log("  
 
 const total = lulus + gagal.length;
 console.log(`\n=== ${lulus}/${total} lulus ===`);
+// Query string — kebocoran nyata yg ditemukan saat uji runtime Sentry v11:
+// request.url & request.query_string membawa ?nama=…&nis=… ke Sentry.
+console.log("\nQuery string di URL:");
+const evQuery = saringEventSentry({
+  request: {
+    url: "https://pay.sekolah.id/admin/verifikasi?cari=Budi%20Santoso&status=pending",
+    query_string: "cari=Budi%20Santoso&nis=2026001",
+    env: { REMOTE_ADDR: "203.0.113.77" },
+  },
+  breadcrumbs: [{ category: "fetch", data: { url: "/admin/laporan?kelas=1A&dari=Siti%20Rahma" } }],
+  transaction: "GET /admin/verifikasi?cari=Kadek%20Ayu",
+});
+cek("query di request.url disamarkan", JSON.stringify(evQuery), ["Budi", "Santoso", "pending"]);
+cek("request.query_string dibuang", JSON.stringify(evQuery), ["2026001", "query_string"]);
+cek("IP di request.env dibuang", JSON.stringify(evQuery), ["203.0.113.77"]);
+cek("query di URL relatif breadcrumb disamarkan", JSON.stringify(evQuery), ["Siti", "Rahma"]);
+cek("query di nama transaksi disamarkan", JSON.stringify(evQuery), ["Kadek"]);
+const tetap = saringEventSentry({ request: { url: "https://pay.sekolah.id/admin/verifikasi" } });
+cek("path tanpa query tetap utuh (konteks debug tak hilang)",
+  JSON.stringify(tetap).includes("/admin/verifikasi") ? "ok" : "PATH-HILANG", ["PATH-HILANG"]);
+
+// Lapis pertama: SDK tak boleh mengumpulkan data sejak awal. @sentry/nextjs v11
+// menghapus `sendDefaultPii` dan default `dataCollection`-nya mengumpulkan
+// cookie, header, query, body request (PIN/kode aktivasi) & variabel lokal.
+console.log("\nKonfigurasi pengumpulan data Sentry (v11 dataCollection):");
+cek("tak ada kategori data yang diaktifkan", JSON.stringify(PENGUMPULAN_DATA_MINIMAL), ["true"]);
+cek("body request/response tak dikumpulkan", JSON.stringify(PENGUMPULAN_DATA_MINIMAL.httpBodies), ["incoming", "outgoing"]);
+for (const kunci of ["userInfo", "cookies", "httpHeaders", "httpBodies", "urlQueryParams",
+  "databaseQueryData", "stackFrameVariables"]) {
+  cek(`kategori '${kunci}' disetel eksplisit (bukan default)`,
+    kunci in PENGUMPULAN_DATA_MINIMAL ? "ada" : "HILANG", ["HILANG"]);
+}
+for (const berkas of ["sentry.server.config.ts", "sentry.edge.config.ts"]) {
+  const isi = readFileSync(berkas, "utf8");
+  cek(`${berkas} memakai dataCollection minimal`,
+    isi.includes("dataCollection: PENGUMPULAN_DATA_MINIMAL") ? "ok" : "TIDAK-DIPAKAI", ["TIDAK-DIPAKAI"]);
+  cek(`${berkas} menyaring transaksi juga`,
+    isi.includes("beforeSendTransaction") ? "ok" : "TANPA-SARING", ["TANPA-SARING"]);
+}
+// SDK klien tak boleh ikut dibundel (rute orang tua <150 KB, PRD §8). Sejak
+// v9+ SDK klien hanya disuntikkan bila berkas ini ada.
+for (const berkas of ["instrumentation-client.ts", "instrumentation-client.js",
+  "sentry.client.config.ts", "sentry.client.config.js"]) {
+  let ada = false;
+  try { readFileSync(berkas); ada = true; } catch {}
+  cek(`tidak ada ${berkas}`, ada ? "ADA" : "tidak ada", ["ADA"]);
+}
+
 if (gagal.length) {
   console.error("\nADA KEBOCORAN:");
   for (const g of gagal) console.error(`  ${g.nama}: ${JSON.stringify(g.hasil).slice(0, 160)}`);

@@ -1,16 +1,16 @@
 "use client";
 
 import { KeyRound } from "lucide-react";
-import { useRef } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { AksiForm, useStatusAksi } from "@/components/ui/aksi-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { ActionResult } from "@/modules/auth/actions";
 import { changeMyPin } from "@/modules/auth/aktivasi-actions";
 
 function SimpanButton({ label }: { label: string }) {
-  const { pending } = useFormStatus();
+  const { pending } = useStatusAksi();
   return (
     <Button type="submit" size="sm" disabled={pending}>
       <KeyRound className="h-4 w-4" aria-hidden />
@@ -41,7 +41,7 @@ function Pin({ id, label, auto }: { id: string; label: string; auto: string }) {
 /** Buat PIN (wali yang dulu masuk lewat OTP) atau ubah PIN (wajib PIN lama). */
 export function PinForm({ punyaPin }: { punyaPin: boolean }) {
   const formRef = useRef<HTMLFormElement>(null);
-  const [state, action] = useFormState<ActionResult | null, FormData>(
+  const [state, action] = useActionState<ActionResult | null, FormData>(
     async (prev, data) => {
       const hasil = await changeMyPin(prev, data);
       if (hasil.ok) formRef.current?.reset();
@@ -51,7 +51,7 @@ export function PinForm({ punyaPin }: { punyaPin: boolean }) {
   );
 
   return (
-    <form ref={formRef} action={action} className="space-y-4">
+    <AksiForm ref={formRef} action={action} className="space-y-4">
       {punyaPin && <Pin id="pin_lama" label="PIN lama" auto="current-password" />}
       <Pin id="pin_baru" label="PIN baru (6 angka)" auto="new-password" />
       <Pin id="pin_ulang" label="Ulangi PIN baru" auto="new-password" />
@@ -70,6 +70,6 @@ export function PinForm({ punyaPin }: { punyaPin: boolean }) {
           </span>
         )}
       </div>
-    </form>
+    </AksiForm>
   );
 }

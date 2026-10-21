@@ -1,9 +1,9 @@
 "use client";
 
 import { ShieldCheck, ShieldOff } from "lucide-react";
-import { useState, useTransition } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import { AksiForm, useStatusAksi } from "@/components/ui/aksi-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -14,7 +14,7 @@ import {
 } from "@/modules/auth/mfa";
 
 function ConfirmButton() {
-  const { pending } = useFormStatus();
+  const { pending } = useStatusAksi();
   return (
     <Button type="submit" className="w-full" disabled={pending}>
       {pending ? "Memverifikasi…" : "Aktifkan 2FA"}
@@ -26,7 +26,7 @@ export function MfaEnroll({ wajib }: { wajib: boolean }) {
   const [enroll, setEnroll] = useState<EnrollData | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [state, action] = useFormState(confirmMfaEnrollment, null);
+  const [state, action] = useActionState(confirmMfaEnrollment, null);
 
   if (state?.ok) {
     return (
@@ -82,7 +82,7 @@ export function MfaEnroll({ wajib }: { wajib: boolean }) {
   }
 
   return (
-    <form action={action} className="space-y-4">
+    <AksiForm action={action} className="space-y-4">
       <input type="hidden" name="factor_id" value={enroll.factorId} />
 
       <div className="space-y-2">
@@ -126,7 +126,7 @@ export function MfaEnroll({ wajib }: { wajib: boolean }) {
       )}
 
       <ConfirmButton />
-    </form>
+    </AksiForm>
   );
 }
 

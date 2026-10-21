@@ -27,10 +27,11 @@ const OK_MESSAGE: Record<string, string> = {
 };
 
 export default async function VerifikasiPage({
-  searchParams,
+  searchParams: searchParamsPromise,
 }: {
-  searchParams: { status?: string; cari?: string; ok?: string };
+  searchParams: Promise<{ status?: string; cari?: string; ok?: string }>;
 }) {
+  const searchParams = await searchParamsPromise;
   const status = searchParams.status || "pending";
   const rows = await getVerificationQueue({ status, cari: searchParams.cari });
 

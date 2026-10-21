@@ -2,9 +2,12 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "./types";
 
-/** Client Supabase untuk Server Components & Server Actions. */
-export function createClient() {
-  const cookieStore = cookies();
+/**
+ * Client Supabase untuk Server Components & Server Actions.
+ * Async sejak Next.js 15: `cookies()` mengembalikan Promise.
+ */
+export async function createClient() {
+  const cookieStore = await cookies();
 
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

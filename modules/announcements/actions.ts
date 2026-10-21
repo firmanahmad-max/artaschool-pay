@@ -42,7 +42,7 @@ export async function createAnnouncement(
   }
   const v = parsed.data;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: created, error } = await supabase
     .from("announcements")
     .insert({
@@ -92,7 +92,7 @@ export async function broadcastAnnouncement(
   await requireAdmin(ANNOUNCE_ROLES);
   const id = String(formData.get("id") ?? "");
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: count, error } = await supabase.rpc("broadcast_announcement", {
     p_announcement_id: id,
   });
@@ -107,7 +107,7 @@ export async function broadcastAnnouncement(
 export async function deleteAnnouncement(formData: FormData): Promise<void> {
   await requireAdmin(ANNOUNCE_ROLES);
   const id = String(formData.get("id") ?? "");
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from("announcements").delete().eq("id", id);
   if (!error) {
     await supabase.rpc("log_audit", {

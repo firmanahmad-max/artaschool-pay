@@ -1,13 +1,14 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
+import { AksiForm, useStatusAksi } from "@/components/ui/aksi-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createAcademicYear } from "@/modules/students/actions";
 
 function SubmitButton() {
-  const { pending } = useFormStatus();
+  const { pending } = useStatusAksi();
   return (
     <Button type="submit" disabled={pending}>
       {pending ? "Menyimpan…" : "Tambah Tahun Ajaran"}
@@ -16,10 +17,10 @@ function SubmitButton() {
 }
 
 export function YearForm() {
-  const [state, action] = useFormState(createAcademicYear, null);
+  const [state, action] = useActionState(createAcademicYear, null);
 
   return (
-    <form action={action} className="grid gap-4 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
+    <AksiForm action={action} className="grid gap-4 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
       <div className="space-y-2">
         <Label htmlFor="name">Nama</Label>
         <Input id="name" name="name" placeholder="2027/2028" required />
@@ -38,6 +39,6 @@ export function YearForm() {
           {state.error}
         </p>
       )}
-    </form>
+    </AksiForm>
   );
 }

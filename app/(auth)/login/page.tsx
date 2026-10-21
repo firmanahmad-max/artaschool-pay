@@ -5,11 +5,12 @@ import { ParentLoginForm } from "./parent-login-form";
 
 export const metadata: Metadata = { title: "Masuk" };
 
-export default function LoginPage({
-  searchParams,
+export default async function LoginPage({
+  searchParams: searchParamsPromise,
 }: {
-  searchParams: { dihapus?: string; aktivasi?: string };
+  searchParams: Promise<{ dihapus?: string; aktivasi?: string }>;
 }) {
+  const searchParams = await searchParamsPromise;
   return (
     <div className="space-y-4">
       {searchParams.dihapus === "1" && (

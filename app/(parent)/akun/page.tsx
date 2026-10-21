@@ -20,7 +20,7 @@ export default async function AkunPage() {
   const guardian = await requireGuardian();
   const [children, { data: punyaPin }] = await Promise.all([
     getGuardianChildren(guardian.id),
-    createClient().rpc("my_pin_is_set"),
+    (await createClient()).rpc("my_pin_is_set"),
   ]);
 
   return (

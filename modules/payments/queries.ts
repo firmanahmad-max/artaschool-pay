@@ -6,7 +6,7 @@ export type BankAccount = { bank: string; no_rek: string; atas_nama: string };
 
 /** Anak-anak wali + tagihan berjalan (unpaid/partial) + status pembayaran terakhir. */
 export async function getChildrenWithBills(guardianId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: links } = await supabase
     .from("guardian_students")
@@ -75,7 +75,7 @@ export async function getChildrenWithBills(guardianId: string) {
  * Ringan — tanpa tagihan; untuk halaman Akun. RLS membatasi ke anak sendiri.
  */
 export async function getGuardianChildren(guardianId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("guardian_students")
     .select(
@@ -102,7 +102,7 @@ export async function getGuardianChildren(guardianId: string) {
 }
 
 export async function getSchoolBankAccounts(): Promise<BankAccount[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("schools")
     .select("bank_accounts")
@@ -113,7 +113,7 @@ export async function getSchoolBankAccounts(): Promise<BankAccount[]> {
 }
 
 export async function getLatestAnnouncements(limit = 3) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("announcements")
     .select("id, title, body, publish_at")
@@ -128,7 +128,7 @@ export async function getLatestAnnouncements(limit = 3) {
  * berarti bukan miliknya (atau tidak ada).
  */
 export async function getParentPaymentDetail(paymentId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: p } = await supabase
     .from("payments")
     .select(
@@ -174,7 +174,7 @@ export async function getParentPaymentDetail(paymentId: string) {
 
 /** Data pembayaran needs_revision utk prefill form "Kirim Ulang". */
 export async function getPaymentForResubmit(paymentId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: p } = await supabase
     .from("payments")
     .select("id, student_id, amount, sender_name, requested_bill_ids, status")
@@ -193,7 +193,7 @@ export async function getPaymentForResubmit(paymentId: string) {
 
 /** Riwayat pembayaran anak-anak wali (untuk halaman Riwayat, Sprint 7). */
 export async function getPaymentHistory(guardianId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: links } = await supabase
     .from("guardian_students")
     .select("student_id")

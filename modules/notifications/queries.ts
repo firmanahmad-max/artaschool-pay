@@ -20,7 +20,7 @@ export const TEMPLATE_LABEL: Record<string, string> = {
 };
 
 export async function getKotakKeluar() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const [{ data }, { data: denganPush }] = await Promise.all([
     supabase
     .from("notification_jobs")
@@ -51,7 +51,7 @@ export async function getKotakKeluar() {
 
 /** Jumlah pesan yang menunggu tindakan — untuk lencana di menu admin. */
 export async function countKotakKeluar(): Promise<number> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { count } = await supabase
     .from("notification_jobs")
     .select("id", { count: "exact", head: true })

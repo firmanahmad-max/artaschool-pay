@@ -1,4 +1,5 @@
-import { withSentryConfig } from "@sentry/nextjs";
+// Sejak @sentry/nextjs v11 pembungkus config ada di subpath `/config`.
+import { withSentryConfig } from "@sentry/nextjs/config";
 
 /**
  * Header keamanan statis. CSP TIDAK di sini — dibangun per-request dengan
@@ -20,10 +21,7 @@ const securityHeaders = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  experimental: {
-    // dibutuhkan instrumentation.ts di Next.js 14
-    instrumentationHook: true,
-  },
+  // instrumentation.ts stabil sejak Next.js 15 — tak perlu flag experimental lagi.
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
@@ -45,9 +43,11 @@ export default withSentryConfig(nextConfig, {
     // Bila diunggah, hapus dari bundel agar tidak ikut tersaji.
     deleteSourcemapsAfterUpload: true,
   },
-  disableLogger: true,
+  bundleSizeOptimizations: { excludeDebugStatements: true },
   // SDK Sentry sisi browser SENGAJA tidak dipakai: +62 KB pada tiap muatan
   // halaman membuat rute orang tua melewati ambang NFR PRD §8 (<150 KB gz,
   // LCP <2,5 dtk di 3G). Galat render dilaporkan lewat /api/lapor-galat.
-  disableClientWebpackPlugin: true,
+  // Sejak @sentry/nextjs v9+ SDK klien HANYA disuntikkan bila ada
+  // `instrumentation-client.ts` / `sentry.client.config.ts` — JANGAN buat
+  // berkas tersebut (opsi lama `disableClientWebpackPlugin` sudah dihapus).
 });

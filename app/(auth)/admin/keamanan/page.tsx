@@ -8,12 +8,13 @@ import { MfaActive, MfaEnroll } from "./enroll";
 export const metadata: Metadata = { title: "Keamanan Akun" };
 
 export default async function KeamananPage({
-  searchParams,
+  searchParams: searchParamsPromise,
 }: {
-  searchParams: { wajib?: string };
+  searchParams: Promise<{ wajib?: string }>;
 }) {
+  const searchParams = await searchParamsPromise;
   const admin = await requireAdminBasic();
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: factors } = await supabase.auth.mfa.listFactors();
   const verified = factors?.totp?.find((f) => f.status === "verified");
 

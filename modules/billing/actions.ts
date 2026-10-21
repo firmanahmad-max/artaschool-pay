@@ -34,7 +34,7 @@ export async function createPaymentType(
   });
   if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("payment_types")
     .insert({ ...parsed.data, school_id: admin.school_id })
@@ -56,7 +56,7 @@ export async function setPaymentTypeActive(formData: FormData): Promise<void> {
   await requireAdmin(FINANCE_ROLES);
   const id = String(formData.get("id") ?? "");
   const active = formData.get("active") === "true";
-  const supabase = createClient();
+  const supabase = await createClient();
   await supabase.from("payment_types").update({ is_active: active }).eq("id", id);
   await supabase.rpc("log_audit", {
     p_action: active ? "payment_type.activated" : "payment_type.deactivated",
@@ -82,7 +82,7 @@ export async function generateBills(
   if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
 
   const period = parsed.data.month ? `${parsed.data.month}-01` : undefined;
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.rpc("generate_bills", {
     p_payment_type_id: parsed.data.payment_type_id,
     p_period: period,
@@ -117,7 +117,7 @@ export async function createIndividualBill(
   });
   if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: year } = await supabase
     .from("academic_years")
     .select("id")
@@ -171,7 +171,7 @@ export async function waiveBill(
   });
   if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.rpc("waive_bill", {
     p_bill_id: parsed.data.bill_id,
     p_note: parsed.data.note,
@@ -185,7 +185,7 @@ export async function waiveBill(
 export async function unwaiveBill(formData: FormData): Promise<void> {
   await requireAdmin(FINANCE_ROLES);
   const id = String(formData.get("bill_id") ?? "");
-  const supabase = createClient();
+  const supabase = await createClient();
   await supabase.rpc("unwaive_bill", { p_bill_id: id });
   revalidatePath("/admin/tagihan");
 }

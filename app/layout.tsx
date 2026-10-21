@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { headers } from "next/headers";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -36,14 +37,21 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // Nonce CSP per-request dari middleware. Membaca header ini SENGAJA membuat
+  // seluruh halaman dirender dinamis: halaman yang di-prerender statis tidak
+  // bisa diberi nonce, sehingga SEMUA skripnya diblokir CSP dan React tak
+  // pernah hidrasi (terbukti pada /privasi, /admin/login, /offline di build
+  // produksi). Lihat nextjs.org/docs/app/guides/content-security-policy.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     // suppressHydrationWarning: next-themes menyetel class="dark" sebelum hydration
     <html lang="id" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans`}>
-        <Providers>{children}</Providers>
+        <Providers nonce={nonce}>{children}</Providers>
       </body>
     </html>
   );

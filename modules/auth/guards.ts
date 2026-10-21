@@ -19,7 +19,7 @@ export type AdminProfile = {
 
 /** Guard layout (parent): wajib sesi + baris guardians tertaut. */
 export async function requireGuardian(): Promise<GuardianProfile> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -53,7 +53,7 @@ const MFA_REQUIRED_ROLES = ["super_admin", "admin_keuangan"];
  * terjadi loop redirect.
  */
 export async function requireAdminBasic(): Promise<AdminProfile> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -86,7 +86,7 @@ export async function requireAdmin(
   allowedRoles?: string[],
 ): Promise<AdminProfile> {
   const admin = await requireAdminBasic();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: aal } =
     await supabase.auth.mfa.getAuthenticatorAssuranceLevel();

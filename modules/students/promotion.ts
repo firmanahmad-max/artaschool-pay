@@ -25,7 +25,7 @@ export async function runPromotion(
     return { ok: false, error: "Tahun ajaran asal/tujuan tidak lengkap." };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.rpc("promote_students", {
     p_from_year: fromYear,
     p_to_year: toYear,

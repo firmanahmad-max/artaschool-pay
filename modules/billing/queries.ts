@@ -14,7 +14,7 @@ export function billStatusLabel(status: string) {
 }
 
 export async function getPaymentTypes() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("payment_types")
     .select("id, name, default_amount, is_recurring, is_active")
@@ -30,7 +30,7 @@ export type BillFilter = {
 
 /** Daftar tagihan tahun ajaran aktif + info siswa/kelas, dengan filter opsional. */
 export async function getBills(filter: BillFilter = {}) {
-  const supabase = createClient();
+  const supabase = await createClient();
   let query = supabase
     .from("bills")
     .select(
@@ -89,7 +89,7 @@ export async function getArrearsByClass() {
 
 /** Tagihan terbuka satu siswa — dipakai form pembayaran tunai/QRIS. */
 export async function getOpenBillsForStudent(studentId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("bills")
     .select("id, amount, amount_paid, period, payment_types(name)")
@@ -105,7 +105,7 @@ export async function getOpenBillsForStudent(studentId: string) {
 }
 
 export async function getActiveStudentsForSelect() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("students")
     .select("id, nis, full_name")

@@ -33,7 +33,7 @@ export async function approvePayment(
     return { ok: false, error: "Isi minimal satu alokasi tagihan." };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.rpc("approve_payment", {
     p_payment_id: paymentId,
     p_allocations: allocations,
@@ -64,7 +64,7 @@ export async function reviewPayment(
     return { ok: false, error: "Catatan wajib diisi." };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.rpc("review_payment", {
     p_payment_id: paymentId,
     p_action: action,

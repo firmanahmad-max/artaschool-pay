@@ -12,10 +12,11 @@ import { AddGuardianForm, EditStudentForm } from "./edit-forms";
 export const metadata: Metadata = { title: "Ubah Siswa" };
 
 export default async function EditSiswaPage({
-  params,
+  params: paramsPromise,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const params = await paramsPromise;
   const [student, activeYear] = await Promise.all([
     getStudent(params.id),
     getActiveYear(),

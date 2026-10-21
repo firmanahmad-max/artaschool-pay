@@ -1,16 +1,16 @@
 "use client";
 
 import { Check, Copy, KeyRound, MessageCircle } from "lucide-react";
-import { useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { AksiForm, useStatusAksi } from "@/components/ui/aksi-form";
 import {
   issueActivationCodeAction,
   type KodeAktivasiResult,
 } from "@/modules/auth/aktivasi-actions";
 
 function TerbitkanButton({ aktif }: { aktif: boolean }) {
-  const { pending } = useFormStatus();
+  const { pending } = useStatusAksi();
   return (
     <Button type="submit" variant="outline" size="sm" disabled={pending}>
       <KeyRound className="h-4 w-4" aria-hidden />
@@ -30,7 +30,7 @@ export function AktivasiWali({
   guardianId: string;
   aktif: boolean;
 }) {
-  const [state, action] = useFormState<KodeAktivasiResult | null, FormData>(
+  const [state, action] = useActionState<KodeAktivasiResult | null, FormData>(
     issueActivationCodeAction,
     null,
   );
@@ -38,7 +38,7 @@ export function AktivasiWali({
 
   return (
     <div className="space-y-2">
-      <form
+      <AksiForm
         action={action}
         onSubmit={(e) => {
           if (
@@ -54,7 +54,7 @@ export function AktivasiWali({
       >
         <input type="hidden" name="guardian_id" value={guardianId} />
         <TerbitkanButton aktif={aktif} />
-      </form>
+      </AksiForm>
 
       {state && !state.ok && (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">

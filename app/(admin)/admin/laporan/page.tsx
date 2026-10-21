@@ -22,16 +22,17 @@ const STATUS_OPTIONS = [
 ];
 
 export default async function LaporanPage({
-  searchParams,
+  searchParams: searchParamsPromise,
 }: {
-  searchParams: {
+  searchParams: Promise<{
     jenis?: string;
     from?: string;
     to?: string;
     kelas?: string;
     status?: string;
-  };
+  }>;
 }) {
+  const searchParams = await searchParamsPromise;
   const jenis = searchParams.jenis === "tunggakan" ? "tunggakan" : "pembayaran";
   const activeYear = await getActiveYear();
   const classes = activeYear ? await getClasses(activeYear.id) : [];

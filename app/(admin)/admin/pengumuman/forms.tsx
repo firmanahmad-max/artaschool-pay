@@ -1,9 +1,9 @@
 "use client";
 
 import { Check, Copy, Megaphone, Send } from "lucide-react";
-import { useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { AksiForm, useStatusAksi } from "@/components/ui/aksi-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -16,7 +16,7 @@ import {
 type ClassOption = { id: string; label: string };
 
 function SubmitButton({ children }: { children: React.ReactNode }) {
-  const { pending } = useFormStatus();
+  const { pending } = useStatusAksi();
   return (
     <Button type="submit" disabled={pending}>
       {pending ? "Memproses…" : children}
@@ -42,11 +42,11 @@ export function AnnouncementForm({
   classes: ClassOption[];
   manual: boolean;
 }) {
-  const [state, action] = useFormState(createAnnouncement, null);
+  const [state, action] = useActionState(createAnnouncement, null);
   const [scope, setScope] = useState<"all" | "class">("all");
 
   return (
-    <form action={action} className="space-y-4">
+    <AksiForm action={action} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="title">Judul</Label>
         <Input id="title" name="title" required maxLength={150} />
@@ -118,14 +118,14 @@ export function AnnouncementForm({
         </SubmitButton>
         <Feedback state={state} />
       </div>
-    </form>
+    </AksiForm>
   );
 }
 
 export function BroadcastButton({ id, manual }: { id: string; manual: boolean }) {
-  const [state, action] = useFormState(broadcastAnnouncement, null);
+  const [state, action] = useActionState(broadcastAnnouncement, null);
   return (
-    <form action={action} className="flex items-center gap-2">
+    <AksiForm action={action} className="flex items-center gap-2">
       <input type="hidden" name="id" value={id} />
       <Button type="submit" variant="outline" size="sm">
         <Send className="h-4 w-4" aria-hidden />
@@ -142,7 +142,7 @@ export function BroadcastButton({ id, manual }: { id: string; manual: boolean })
           {state.ok ? state.message : state.error}
         </span>
       )}
-    </form>
+    </AksiForm>
   );
 }
 

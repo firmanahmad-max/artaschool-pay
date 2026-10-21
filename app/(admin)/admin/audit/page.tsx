@@ -19,10 +19,11 @@ const ROLE_LABEL: Record<string, string> = {
 };
 
 export default async function AuditPage({
-  searchParams,
+  searchParams: searchParamsPromise,
 }: {
-  searchParams: { aksi?: string; from?: string; to?: string };
+  searchParams: Promise<{ aksi?: string; from?: string; to?: string }>;
 }) {
+  const searchParams = await searchParamsPromise;
   // RBAC PRD §6.5: audit log hanya super_admin & kepala sekolah
   await requireAdmin(["super_admin", "kepala_sekolah"]);
   const logs = await getAuditLogs({

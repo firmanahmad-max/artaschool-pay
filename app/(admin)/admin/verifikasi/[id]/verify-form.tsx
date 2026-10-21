@@ -1,9 +1,9 @@
 "use client";
 
 import { CheckCircle2, RotateCcw, XCircle } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { AksiForm, useStatusAksi } from "@/components/ui/aksi-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,7 +28,7 @@ function SubmitButton({
   variant?: "default" | "destructive" | "outline";
   disabled?: boolean;
 }) {
-  const { pending } = useFormStatus();
+  const { pending } = useStatusAksi();
   return (
     <Button type="submit" variant={variant} disabled={pending || disabled}>
       {pending ? "Memproses…" : children}
@@ -53,8 +53,8 @@ export function VerifyForm({
   const [alloc, setAlloc] = useState<Record<string, string>>(() =>
     Object.fromEntries(bills.map((b) => [b.id, String(proposal[b.id] ?? 0)])),
   );
-  const [approveState, approveAction] = useFormState(approvePayment, null);
-  const [reviewState, reviewAction] = useFormState(reviewPayment, null);
+  const [approveState, approveAction] = useActionState(approvePayment, null);
+  const [reviewState, reviewAction] = useActionState(reviewPayment, null);
 
   // Keyboard shortcut A/R/V (PRD §7.2) — abaikan saat mengetik di input
   useEffect(() => {
@@ -109,7 +109,7 @@ export function VerifyForm({
         </div>
 
         {mode === "approve" ? (
-          <form action={approveAction} className="space-y-4">
+          <AksiForm action={approveAction} className="space-y-4">
             <input type="hidden" name="payment_id" value={paymentId} />
             <div className="space-y-2">
               {bills.length === 0 && (
@@ -182,9 +182,9 @@ export function VerifyForm({
               <CheckCircle2 className="h-4 w-4" aria-hidden />
               Setujui &amp; Eksekusi Alokasi
             </SubmitButton>
-          </form>
+          </AksiForm>
         ) : (
-          <form action={reviewAction} className="space-y-4">
+          <AksiForm action={reviewAction} className="space-y-4">
             <input type="hidden" name="payment_id" value={paymentId} />
             <input type="hidden" name="action" value={mode} />
             <div className="space-y-2">
@@ -224,7 +224,7 @@ export function VerifyForm({
                 </>
               )}
             </SubmitButton>
-          </form>
+          </AksiForm>
         )}
       </CardContent>
     </Card>
