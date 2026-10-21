@@ -109,8 +109,6 @@ const infoUtuh = berguna.includes("Tagihan tidak ditemukan") && berguna.includes
 if (infoUtuh) { lulus++; console.log("  OK    pesan diagnostik tetap terbaca"); }
 else { gagal.push({ nama: "pesan diagnostik", hasil: berguna }); console.log("  GAGAL pesan diagnostik ikut tersamar: " + berguna); }
 
-const total = lulus + gagal.length;
-console.log(`\n=== ${lulus}/${total} lulus ===`);
 // Query string — kebocoran nyata yg ditemukan saat uji runtime Sentry v11:
 // request.url & request.query_string membawa ?nama=…&nis=… ke Sentry.
 console.log("\nQuery string di URL:");
@@ -158,6 +156,9 @@ for (const berkas of ["instrumentation-client.ts", "instrumentation-client.js",
   try { readFileSync(berkas); ada = true; } catch {}
   cek(`tidak ada ${berkas}`, ada ? "ADA" : "tidak ada", ["ADA"]);
 }
+
+const total = lulus + gagal.length;
+console.log(`\n=== ${lulus}/${total} lulus ===`);
 
 if (gagal.length) {
   console.error("\nADA KEBOCORAN:");

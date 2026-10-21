@@ -116,6 +116,10 @@ Panduan lengkap: `docs/SETUP-GATEWAY-WA.md`.
 ## 6. Verifikasi keamanan
 
 - [ ] `npm run pentest` → **56/56 lulus**
+- [ ] `npm audit --omit=dev` → **0 kerentanan** (dependensi produksi). Sisa
+      temuan dev-only (Tailwind 3 & eslint-config-next: braces, micromatch,
+      postcss-selector-parser) tak ikut ke produksi dan baru tertutup lewat
+      migrasi Tailwind 4 — `braces` belum punya versi perbaikan sama sekali
 - [ ] `npm run backup:drill` → lulus, simpan dump ke storage terenkripsi terpisah
 - [ ] Cek header: `curl -I https://APLIKASI` → CSP ber-nonce, HSTS, X-Frame-Options
 - [ ] Pastikan bukti transfer **tidak** bisa diakses tanpa signed URL

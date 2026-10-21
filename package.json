@@ -50,11 +50,16 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.5.28",
-    "postcss": "^8.4.47",
+    "postcss": "^8.5.31",
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.8",
     "tailwindcss": "^3.4.14",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.6.3"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "^8.5.31"
+    }
   }
 }
