@@ -435,6 +435,20 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"statistik_perangkat": {
+                  Row: {
+                    "area": string,"browser": string,"hari": string,"jumlah": number,"os": string,"os_versi": number,"tw4": boolean,"versi": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "area": string,"browser": string,"hari": string,"jumlah"?: number,"os": string,"os_versi": number,"tw4": boolean,"versi": number
+                  }
+                  Update: {
+                    "area"?: string,"browser"?: string,"hari"?: string,"jumlah"?: number,"os"?: string,"os_versi"?: number,"tw4"?: boolean,"versi"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"students": {
                   Row: {
                     "full_name": string,"id": string,"is_active": boolean | null,"nis": string,"school_id": string
@@ -475,6 +489,9 @@ isOneToOne: false
                            },
 "broadcast_announcement":
 { Args: { "p_announcement_id": string }; Returns: number
+                           },
+"catat_statistik_perangkat":
+{ Args: { "p_area": string,"p_browser": string,"p_os": string,"p_os_versi": number,"p_tw4": boolean,"p_versi": number }; Returns: undefined
                            },
 "check_rate_limit":
 { Args: { "p_bucket": string,"p_max": number,"p_window_seconds": number }; Returns: boolean
@@ -592,6 +609,11 @@ isOneToOne: false
                            },
 "review_payment":
 { Args: { "p_action": string,"p_note": string,"p_payment_id": string }; Returns: undefined
+                           },
+"ringkasan_statistik_perangkat":
+{ Args: { "p_hari"?: number }; Returns: {
+              "area": string,"browser": string,"jumlah": number,"os": string,"os_versi": number,"tw4": boolean,"versi": number
+            }[]
                            },
 "save_push_subscription":
 { Args: { "p_auth": string,"p_endpoint": string,"p_p256dh": string,"p_user_agent"?: string }; Returns: undefined

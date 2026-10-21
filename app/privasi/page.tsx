@@ -72,6 +72,15 @@ export default function PrivasiPage() {
           Kami tidak meminta data yang tidak diperlukan (mis. NIK, data
           rekening di luar yang tertera pada bukti transfer).
         </p>
+        <p>
+          <strong>Statistik teknis anonim:</strong> paling banyak sekali sehari,
+          aplikasi mencatat jenis &amp; versi browser serta sistem operasi
+          (mis. &quot;Chrome 129, Android 13&quot;) sebagai hitungan gabungan —
+          tanpa nama, nomor HP, alamat IP, atau halaman yang dibuka — agar
+          sekolah tahu kapan pembaruan tampilan aman untuk semua ponsel. Tidak
+          dicatat bila browser Anda mengaktifkan &quot;Do Not Track&quot; atau
+          &quot;Global Privacy Control&quot;.
+        </p>
       </Bagian>
 
       <Bagian judul="2. Tujuan penggunaan">

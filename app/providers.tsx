@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { useState } from "react";
 import { PwaProvider } from "@/components/pwa-provider";
+import { StatistikPerangkat } from "@/components/statistik-perangkat";
 import { ThemeColorMeta } from "@/components/theme-color-meta";
 
 export function Providers({
@@ -28,6 +29,7 @@ export function Providers({
       <QueryClientProvider client={queryClient}>
         <ThemeColorMeta />
         <PwaProvider />
+        <StatistikPerangkat />
         {children}
       </QueryClientProvider>
     </ThemeProvider>

@@ -123,7 +123,9 @@ Panduan lengkap: `docs/SETUP-GATEWAY-WA.md`.
       **Keputusan (Okt 2026): TETAP di Tailwind 3.4.** Tailwind 4 "will not
       work in older browsers" (min. Safari 16.4 / Chrome 111) — iPhone di
       iOS ≤16.3 & Android dgn Chrome lama milik wali akan rusak tampilannya.
-      Tinjau ulang hanya bila data pilot menunjukkan perangkat lama sudah jarang.
+      Tinjau ulang hanya bila data pilot menunjukkan perangkat lama sudah jarang:
+      lihat kartu **Perangkat wali (30 hari, anonim)** di halaman Laporan
+      (aturan praktis: ≤ 2% perangkat belum mendukung).
 - [ ] `npm run backup:drill` → lulus, simpan dump ke storage terenkripsi terpisah
 - [ ] Cek header: `curl -I https://APLIKASI` → CSP ber-nonce, HSTS, X-Frame-Options
 - [ ] Pastikan bukti transfer **tidak** bisa diakses tanpa signed URL

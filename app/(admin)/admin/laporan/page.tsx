@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn, formatRupiah, formatTanggal } from "@/lib/utils";
 import { getActiveYear, getClasses } from "@/modules/students/queries";
 import { getArrearsRows, getPaymentReport } from "@/modules/reports/queries";
+import { StatistikPerangkatCard } from "./perangkat";
 
 export const metadata: Metadata = { title: "Laporan" };
 
@@ -252,6 +253,8 @@ export default async function LaporanPage({
           </CardContent>
         </Card>
       )}
+
+      <StatistikPerangkatCard />
     </div>
   );
 }

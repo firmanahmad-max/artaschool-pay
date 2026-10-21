@@ -40,6 +40,8 @@ jobs:
         run: npm run test:gateway
       - name: Kredensial wali (OTP, PIN, kode aktivasi)
         run: npm run test:auth
+      - name: Statistik perangkat anonim (tanpa data pribadi)
+        run: npm run test:perangkat
 
   database:
     name: Validasi skema PostgreSQL 16

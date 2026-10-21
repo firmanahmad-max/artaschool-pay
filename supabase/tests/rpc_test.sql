@@ -521,7 +521,7 @@ begin
                         'claim_notification_jobs', 'complete_notification_job',
                         'find_duplicate_proof', 'recompute_bill_amount_paid',
                         'verify_activation_code', 'complete_guardian_activation',
-                        'auth_user_id_by_phone')
+                        'auth_user_id_by_phone', 'catat_statistik_perangkat')
   loop
     if has_function_privilege('anon', v_fn.oid, 'execute')
        or has_function_privilege('authenticated', v_fn.oid, 'execute') then
@@ -768,6 +768,41 @@ begin
   perform delete_my_guardian_account();
   perform uji.samakan(exists (select 1 from push_subscriptions where guardian_id = v_gx), false,
                       'hapus akun menghapus perangkat push');
+end $$;
+
+-- ── 18. Statistik perangkat anonim ─────────────────────────────────────────
+\echo ''
+\echo '[18] Statistik perangkat: agregat, daftar tertutup, hanya admin membaca'
+do $$
+declare v_n int;
+begin
+  perform catat_statistik_perangkat('wali', 'safari', 15, 'ios', 15, false);
+  perform catat_statistik_perangkat('wali', 'safari', 15, 'ios', 15, false);
+  perform catat_statistik_perangkat('wali', 'chrome', 129, 'android', 13, true);
+
+  select count(*) into v_n from statistik_perangkat;
+  perform uji.samakan(v_n, 2, 'kunjungan berulang → penghitung, bukan baris baru');
+  perform uji.samakan((select jumlah from statistik_perangkat where browser = 'safari'), 2,
+                      'penghitung bertambah');
+
+  perform uji.harus_gagal(
+    'select catat_statistik_perangkat(''wali'', ''Mozilla/5.0 (iPhone) bocor'', 1, ''ios'', 1, false)',
+    'string bebas (mis. UA utuh) ditolak', 'check');
+  perform uji.harus_gagal(
+    'select catat_statistik_perangkat(''wali'', ''chrome'', 100000, ''android'', 1, true)',
+    'versi absurd ditolak', 'check');
+  perform uji.samakan(
+    (select count(*)::int from information_schema.columns
+     where table_name = 'statistik_perangkat'
+       and column_name ~ '(ua|agent|ip|user|guardian|session|path|url)'),
+    0, 'tak ada kolom identitas/UA/IP/halaman');
+
+  perform uji.jadi_admin('viewer', 'aal2');
+  perform uji.samakan((select count(*)::int from ringkasan_statistik_perangkat(30)), 2,
+                      'admin membaca ringkasan');
+  perform uji.jadi_wali('+6281234567001');
+  perform uji.harus_gagal('select * from ringkasan_statistik_perangkat(30)',
+                          'wali tak bisa membaca ringkasan', 'admin');
 end $$;
 
 -- Buang seluruh data uji; basis data kembali seperti semula.
