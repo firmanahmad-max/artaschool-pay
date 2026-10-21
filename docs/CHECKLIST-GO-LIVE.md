@@ -118,8 +118,12 @@ Panduan lengkap: `docs/SETUP-GATEWAY-WA.md`.
 - [ ] `npm run pentest` → **56/56 lulus**
 - [ ] `npm audit --omit=dev` → **0 kerentanan** (dependensi produksi). Sisa
       temuan dev-only (Tailwind 3 & eslint-config-next: braces, micromatch,
-      postcss-selector-parser) tak ikut ke produksi dan baru tertutup lewat
-      migrasi Tailwind 4 — `braces` belum punya versi perbaikan sama sekali
+      postcss-selector-parser) tak ikut ke produksi dan hanya memproses berkas
+      proyek sendiri — `braces` belum punya versi perbaikan sama sekali.
+      **Keputusan (Okt 2026): TETAP di Tailwind 3.4.** Tailwind 4 "will not
+      work in older browsers" (min. Safari 16.4 / Chrome 111) — iPhone di
+      iOS ≤16.3 & Android dgn Chrome lama milik wali akan rusak tampilannya.
+      Tinjau ulang hanya bila data pilot menunjukkan perangkat lama sudah jarang.
 - [ ] `npm run backup:drill` → lulus, simpan dump ke storage terenkripsi terpisah
 - [ ] Cek header: `curl -I https://APLIKASI` → CSP ber-nonce, HSTS, X-Frame-Options
 - [ ] Pastikan bukti transfer **tidak** bisa diakses tanpa signed URL
