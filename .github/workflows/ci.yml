@@ -10,10 +10,10 @@ jobs:
     name: Lint, typecheck & build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npm run lint
@@ -26,10 +26,10 @@ jobs:
     name: Privasi (UU PDP) & aksesibilitas
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       - run: npm ci
       - name: Penyaring data pribadi laporan error
@@ -61,7 +61,7 @@ jobs:
     env:
       PGPASSWORD: postgres
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Stub skema auth Supabase
         run: psql -h localhost -U postgres -d artaschool -v ON_ERROR_STOP=1 -f supabase/ci/auth_stub.sql
       - name: Jalankan migrations
