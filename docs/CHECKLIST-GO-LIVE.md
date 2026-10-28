@@ -115,7 +115,9 @@ Panduan lengkap: `docs/SETUP-GATEWAY-WA.md`.
 
 ## 6. Verifikasi keamanan
 
-- [ ] `npm run pentest` → **56/56 lulus**
+- [ ] `npm run pentest` → **60/60 lulus** (CI menjalankannya otomatis pada
+      Supabase lokal di tiap push, bersama UAT & backup drill — di sini
+      jalankan ulang terhadap **staging/produksi**)
 - [ ] `npm audit --omit=dev` → **0 kerentanan** (dependensi produksi). Sisa
       temuan dev-only (Tailwind 3 & eslint-config-next: braces, micromatch,
       postcss-selector-parser) tak ikut ke produksi dan hanya memproses berkas
