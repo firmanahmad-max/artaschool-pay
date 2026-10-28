@@ -91,11 +91,50 @@ jobs:
                              where tgname='audit_logs_immutable') then
                 raise exception 'trigger append-only audit_logs hilang';
               end if;
-              -- RLS wajib aktif di tabel sensitif
+              -- RLS wajib aktif di SEMUA tabel public (tabel baru ikut tercek;
+              -- daftar tetap terbukti tertinggal saat tabel ditambah)
               if exists (select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
-                         where n.nspname='public' and not c.relrowsecurity
-                           and c.relname in ('payments','bills','students','guardians',
-                                             'audit_logs','notification_jobs','rate_limits')) then
-                raise exception 'ada tabel sensitif tanpa RLS';
+                         where n.nspname='public' and c.relkind='r' and not c.relrowsecurity) then
+                raise exception 'ada tabel public tanpa RLS: %', (
+                  select string_agg(c.relname, ', ') from pg_class c
+                  join pg_namespace n on n.oid=c.relnamespace
+                  where n.nspname='public' and c.relkind='r' and not c.relrowsecurity);
               end if;
             end \$\$;"
+
+  # Supabase lokal SUNGGUHAN (auth, PostgREST, storage, RLS, hak EXECUTE) —
+  # menangkap kelas masalah yang lolos dari validasi Postgres polos di atas:
+  # RPC yang terbuka untuk anon, isolasi antar-wali lewat sesi nyata, siklus
+  # SPP ujung-ke-ujung, dan restore backup yang diam-diam membuka celah.
+  supabase:
+    name: Pentest, UAT & backup drill (Supabase lokal)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      # Nilai tiruan: nomor uji memakai OTP tetap ([auth.sms.test_otp]),
+      # hook send_sms tidak pernah dipanggil di sini.
+      SEND_SMS_HOOK_SECRET: "v1,whsec_dGVzdC1jaS1zZW5kLXNtcy1ob29r"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 2.122.0
+      - name: Jalankan Supabase lokal (migrasi + seed dari nol)
+        run: supabase start -x realtime,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+      - name: Tulis .env.local dari kunci demo lokal
+        run: |
+          supabase status -o env \
+            | sed -n 's/^API_URL=/NEXT_PUBLIC_SUPABASE_URL=/p; s/^ANON_KEY=/NEXT_PUBLIC_SUPABASE_ANON_KEY=/p; s/^SERVICE_ROLE_KEY=/SUPABASE_SERVICE_ROLE_KEY=/p' \
+            | tr -d '"' > .env.local
+          cut -d= -f1 .env.local
+      - name: Pentest (sesi wali & anon nyata)
+        run: npm run pentest
+      - name: UAT siklus SPP penuh
+        run: npm run uat
+      - name: Backup drill (data + paritas keamanan)
+        run: npm run backup:drill
