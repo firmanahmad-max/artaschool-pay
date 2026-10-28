@@ -112,8 +112,9 @@ jobs:
     timeout-minutes: 20
     env:
       # Nilai tiruan: nomor uji memakai OTP tetap ([auth.sms.test_otp]),
-      # hook send_sms tidak pernah dipanggil di sini.
-      SEND_SMS_HOOK_SECRET: "v1,whsec_dGVzdC1jaS1zZW5kLXNtcy1ob29r"
+      # hook send_sms tidak pernah dipanggil di sini. CLI menolak secret
+      # yang bagian base64-nya < 32 karakter.
+      SEND_SMS_HOOK_SECRET: "v1,whsec_dGVzdC1jaS1zZW5kLXNtcy1ob29rLXNlY3JldC1hcnRhc2Nob29sLXBheQ=="
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
