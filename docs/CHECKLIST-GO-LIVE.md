@@ -126,7 +126,15 @@ Panduan lengkap: `docs/SETUP-GATEWAY-WA.md`.
       Tinjau ulang hanya bila data pilot menunjukkan perangkat lama sudah jarang:
       lihat kartu **Perangkat wali (30 hari, anonim)** di halaman Laporan
       (aturan praktis: ≤ 2% perangkat belum mendukung).
-- [ ] `npm run backup:drill` → lulus, simpan dump ke storage terenkripsi terpisah
+- [ ] `npm run backup:drill` → lulus, simpan dump ke storage terenkripsi terpisah.
+      Drill memeriksa SEMUA tabel (jumlah + checksum isi) **dan** paritas
+      keamanan (hak EXECUTE fungsi, RLS, policy, trigger)
+- [ ] **Prosedur restore darurat dari dump**: `pg_restore --no-owner` saja —
+      **JANGAN pakai `--no-privileges`**. Opsi itu membuang semua REVOKE dan
+      terbukti membuat RPC internal (antrean notifikasi, verifikasi kode
+      aktivasi, cari akun via nomor HP, …) bisa dipanggil anon lagi. Setelah
+      restore apa pun (dump maupun PITR): jalankan `npm run pentest` ke DB
+      hasil restore sebelum dibuka untuk pengguna
 - [ ] Cek header: `curl -I https://APLIKASI` → CSP ber-nonce, HSTS, X-Frame-Options
 - [ ] Pastikan bukti transfer **tidak** bisa diakses tanpa signed URL
 

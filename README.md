@@ -43,7 +43,7 @@ Bucket storage dibuat manual (privat!): `payment-proofs` — lihat komentar §7 
 - `npm run typegen` — generate tipe Supabase (butuh `supabase start`)
 - `npm run seed:admin` — buat akun admin pengembangan
 - `npm run pentest` — 21 uji batas keamanan memakai sesi wali sungguhan
-- `npm run backup:drill` — dump → restore → bandingkan tabel kritis
+- `npm run backup:drill` — dump → restore → bandingkan seluruh tabel (jumlah + checksum) & paritas keamanan (hak fungsi, RLS, policy, trigger)
 
 > ⚠️ Jangan menjalankan `npm run build` selagi `npm run dev` hidup — keduanya
 > berbagi folder `.next` dan bisa saling merusak cache. Urutan aman:

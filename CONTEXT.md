@@ -63,7 +63,7 @@ Acuan untuk development lokal (Claude Code / manual). Sumber kebenaran produk: `
   - Security headers di `next.config.mjs`: CSP, X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy, HSTS; `poweredByHeader: false`
   - Storage: bucket tetap privat **tanpa policy apa pun** pada storage.objects → default-deny; satu-satunya jalur baca adalah signed URL 5 menit server-side (lebih ketat dari policy prefix school_id di PRD §6.3)
   - `npm run pentest` (`scripts/pentest.mjs`) — 21 uji memakai SESI WALI SUNGGUHAN (anon key + OTP uji), **21/21 lulus**: isolasi antar-wali, tolak submit/approve anak orang lain, admin_users/audit_logs/notification_jobs tertutup, audit append-only bahkan bagi service_role, bukti transfer tak bisa diunduh/di-signed-URL wali lain, anon nol akses
-  - `npm run backup:drill` (`scripts/backup-drill.mjs`) — dump → restore ke DB baru → bandingkan 8 tabel kritis; **LULUS** (peringatan pg_restore hanya objek internal Supabase). Folder `/backups` masuk .gitignore
+  - `npm run backup:drill` (`scripts/backup-drill.mjs`) — dump → restore ke DB baru → bandingkan SELURUH tabel public (jumlah + checksum isi) dan paritas keamanan (hak EXECUTE fungsi, RLS, policy, trigger); restore WAJIB tanpa `--no-privileges` (opsi itu membuka kembali RPC internal ke anon); **LULUS**. Folder `/backups` masuk .gitignore
   - CI diperkuat: guard SQL menolak build bila `payments` punya policy UPDATE, trigger append-only hilang, atau ada tabel sensitif tanpa RLS — **terbukti menangkap regresi** saat RLS sengaja dimatikan
   - Dokumentasi operasional: `docs/PANDUAN-ADMIN.md` (bahasa non-teknis, alur harian, troubleshooting)
   - ⚠️ Utang teknis tercatat: CSP masih perlu `'unsafe-inline'` untuk skrip hidrasi Next.js → pindah ke nonce per-request di v2

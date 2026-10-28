@@ -188,7 +188,7 @@ Catatan audit **tidak bisa diubah atau dihapus oleh siapa pun**, termasuk admini
 
 ## 10. Untuk Pengelola Sistem
 
-- **Backup**: Supabase PITR 7 hari. Jalankan `npm run backup:drill` berkala untuk membuktikan backup benar-benar bisa dipulihkan. Simpan berkas dump ke storage terenkripsi terpisah.
+- **Backup**: Supabase PITR 7 hari. Jalankan `npm run backup:drill` berkala untuk membuktikan backup benar-benar bisa dipulihkan **dengan pengaman yang sama**. Simpan berkas dump ke storage terenkripsi terpisah. Saat memulihkan dari dump: `pg_restore --no-owner` **tanpa** `--no-privileges` (opsi itu membuka kembali fungsi internal untuk publik), lalu jalankan `npm run pentest` sebelum aplikasi dibuka.
 - **Uji keamanan**: `npm run pentest` — memverifikasi isolasi antar-wali, storage privat, dan audit append-only.
 - **Worker notifikasi**: `POST /api/jobs/notifications` dengan header `x-cron-secret`. Dijadwalkan otomatis tiap 5 menit di Vercel.
 - **Retensi bukti transfer**: 7 tahun (kebutuhan pembukuan) sebelum diarsipkan.
