@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { tolakBilaBukanCron } from "@/lib/cron-route";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -8,19 +9,12 @@ export const dynamic = "force-dynamic";
  * Pengiriman sebenarnya tetap dilakukan worker `/api/jobs/notifications`
  * (throttle + retry + dead-letter berlaku otomatis).
  *
- * Dijadwalkan Vercel Cron; dilindungi header `x-cron-secret`.
+ * Dijadwalkan Vercel Cron (GET + `Authorization: Bearer`) atau penjadwal lain
+ * (POST + `x-cron-secret`) — lihat `lib/cron-auth.ts`.
  */
-export async function POST(request: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    return NextResponse.json(
-      { error: "CRON_SECRET belum dikonfigurasi" },
-      { status: 500 },
-    );
-  }
-  if (request.headers.get("x-cron-secret") !== secret) {
-    return NextResponse.json({ error: "Tidak diizinkan" }, { status: 401 });
-  }
+async function jalankan(request: NextRequest) {
+  const tolak = tolakBilaBukanCron(request);
+  if (tolak) return tolak;
 
   const supabase = createAdminClient();
   const { data, error } = await supabase.rpc("enqueue_daily_digest");
@@ -30,3 +24,6 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ queued: data ?? 0 });
 }
+
+export const GET = jalankan;
+export const POST = jalankan;

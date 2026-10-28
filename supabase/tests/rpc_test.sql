@@ -805,6 +805,30 @@ begin
                           'wali tak bisa membaca ringkasan', 'admin');
 end $$;
 
+-- ── 19. Digest harian idempoten ────────────────────────────────────────────
+\echo ''
+\echo '[19] Digest harian: panggilan cron ganda tidak menggandakan pesan'
+do $$
+declare v_pertama int;
+begin
+  delete from notification_jobs where template = 'digest.daily';
+
+  v_pertama := enqueue_daily_digest();
+  perform uji.samakan(v_pertama >= 1, true, 'digest pertama diantrekan');
+  perform uji.samakan(enqueue_daily_digest(), 0,
+                      'panggilan kedua di hari yang sama tidak mengantre ulang');
+  perform uji.samakan(
+    (select count(*)::int from notification_jobs
+     where template = 'digest.daily' and recipient_phone = '+6281234567090'),
+    1, 'kepala sekolah hanya menerima 1 digest per hari');
+
+  -- Esok hari: digest kemarin tidak menghalangi digest baru.
+  update notification_jobs set created_at = created_at - interval '1 day'
+  where template = 'digest.daily';
+  perform uji.samakan(enqueue_daily_digest(), v_pertama,
+                      'hari berikutnya digest diantrekan lagi');
+end $$;
+
 -- Buang seluruh data uji; basis data kembali seperti semula.
 rollback;
 

@@ -23,6 +23,7 @@
     "test:gateway": "node scripts/test-gateway.mjs",
     "test:auth": "node scripts/test-auth.mjs",
     "test:perangkat": "node scripts/test-perangkat.mjs",
+    "test:cron": "node scripts/test-cron.mjs",
     "cek:wa": "node scripts/cek-wa-gateway.mjs"
   },
   "dependencies": {

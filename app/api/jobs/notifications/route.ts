@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { tolakBilaBukanCron } from "@/lib/cron-route";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendWhatsApp } from "@/modules/notifications/gateway";
 import { waMode } from "@/modules/notifications/mode";
@@ -52,21 +53,15 @@ async function kirimJobPush(
 }
 
 /**
- * Worker antrean notifikasi. Dipanggil terjadwal (Vercel Cron / Edge Function).
- * Dilindungi header `x-cron-secret`. Retry + dead-letter ditangani RPC
- * `complete_notification_job`.
+ * Worker antrean notifikasi. Dipanggil terjadwal: Vercel Cron (GET +
+ * `Authorization: Bearer`) atau penjadwal lain (POST + `x-cron-secret`) —
+ * lihat `lib/cron-auth.ts`. Retry + dead-letter ditangani RPC
+ * `complete_notification_job`; klaim memakai SKIP LOCKED sehingga panggilan
+ * ganda/bersamaan aman.
  */
-export async function POST(request: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    return NextResponse.json(
-      { error: "CRON_SECRET belum dikonfigurasi" },
-      { status: 500 },
-    );
-  }
-  if (request.headers.get("x-cron-secret") !== secret) {
-    return NextResponse.json({ error: "Tidak diizinkan" }, { status: 401 });
-  }
+async function jalankan(request: NextRequest) {
+  const tolak = tolakBilaBukanCron(request);
+  if (tolak) return tolak;
 
   const supabase = createAdminClient();
   // Mode manual: kanal WA dibiarkan menunggu di Kotak Keluar (dikirim admin);
@@ -107,3 +102,6 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ claimed: jobs?.length ?? 0, sent, failed });
 }
+
+export const GET = jalankan;
+export const POST = jalankan;

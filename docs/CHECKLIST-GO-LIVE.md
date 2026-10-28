@@ -83,13 +83,55 @@ Panduan lengkap: `docs/SETUP-GATEWAY-WA.md`.
 
 ## 4. Deploy aplikasi (Vercel)
 
+- [ ] **Paket Vercel Pro.** `vercel.json` menjadwalkan worker notifikasi tiap
+      5 menit; di paket **Hobby deploy akan GAGAL** (Hobby hanya mengizinkan
+      cron sekali sehari, dan dibatasi untuk pemakaian pribadi non-komersial).
+      Tetap di Hobby (mis. staging)? → hapus blok `crons` dari `vercel.json`
+      lalu pakai **Alternatif pg_cron** di bawah
 - [ ] Import repo, deploy
 - [ ] Isi seluruh environment variable (lihat `.env.local.example`)
-- [ ] `CRON_SECRET` — acak panjang, **bukan** nilai contoh
-- [ ] Pastikan dua cron aktif: notifikasi (tiap 5 menit) & digest (18.00 WITA)
-- [ ] Uji manual worker:
+- [ ] `CRON_SECRET` — acak panjang (≥ 32 karakter), **bukan** nilai contoh.
+      Vercel otomatis mengirimnya sebagai `Authorization: Bearer …` ke cron
+- [ ] Vercel → Settings → **Cron Jobs**: dua cron terdaftar — notifikasi
+      (tiap 5 menit) & digest (10.00 UTC = 18.00 WITA). Klik **Run** pada
+      keduanya → **View Logs** harus menunjukkan **200**, bukan 401/405/500
+      (401 = `CRON_SECRET` berbeda/kosong; 500 = `CRON_SECRET` belum diisi)
+- [ ] Uji manual worker (penjadwal selain Vercel memakai header ini):
       `curl -X POST -H "x-cron-secret: ..." https://APLIKASI/api/jobs/notifications`
 - [ ] Pasang domain khusus + HTTPS
+
+**Alternatif pg_cron (tanpa Vercel Cron — gratis, teruji di Supabase lokal).**
+Supabase → SQL Editor, ganti `https://APLIKASI` & `CRON_SECRET_ANDA`:
+
+```sql
+create extension if not exists pg_cron;
+create extension if not exists pg_net;
+select vault.create_secret('https://APLIKASI', 'artaschool_app_url');
+select vault.create_secret('CRON_SECRET_ANDA', 'artaschool_cron_secret');
+
+-- Worker notifikasi tiap 5 menit
+select cron.schedule('artaschool-notifikasi', '*/5 * * * *', $$
+  select net.http_post(
+    url := (select decrypted_secret from vault.decrypted_secrets where name = 'artaschool_app_url') || '/api/jobs/notifications',
+    headers := jsonb_build_object('x-cron-secret',
+      (select decrypted_secret from vault.decrypted_secrets where name = 'artaschool_cron_secret')),
+    timeout_milliseconds := 60000);
+$$);
+
+-- Digest kepala sekolah: 10.00 UTC = 18.00 WITA, Senin–Sabtu
+select cron.schedule('artaschool-digest', '0 10 * * 1-6', $$
+  select net.http_post(
+    url := (select decrypted_secret from vault.decrypted_secrets where name = 'artaschool_app_url') || '/api/jobs/digest',
+    headers := jsonb_build_object('x-cron-secret',
+      (select decrypted_secret from vault.decrypted_secrets where name = 'artaschool_cron_secret')),
+    timeout_milliseconds := 60000);
+$$);
+```
+
+Cek: `select status_code, content from net._http_response order by created desc limit 5;`
+→ harus `200`. **Jangan** pakai keduanya sekaligus (Vercel Cron + pg_cron):
+aman (klaim antrean memakai SKIP LOCKED, digest idempoten per hari), tetapi
+pemborosan. Mengganti `CRON_SECRET` = perbarui juga secret di Vault.
 
 ## 5. Data sekolah
 

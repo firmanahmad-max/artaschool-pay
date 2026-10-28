@@ -300,22 +300,52 @@ Fonnte resmi dan menemukan **dua bug yang hanya muncul di produksi**:
 - Panduan lengkap: `docs/SETUP-GATEWAY-WA.md` (daftar Fonnte → sambung device →
   token → env → uji → sambung OTP hook)
 
+## Sep–Okt 2026 — hak UU PDP, login tanpa gateway, pengerasan pra-go-live
+- **Hak wali UU PDP** (migration 014–017): hapus akun (data pembukuan
+  dipertahankan, identitas dilepas), ekspor data pribadi, koreksi profil,
+  halaman `/privasi`
+- 🔴 **018**: RPC antrean notifikasi & helper internal sempat bisa dipanggil
+  anon (default privileges Supabase memberi EXECUTE ke anon) → REVOKE eksplisit
+  + daftar RPC internal di `rpc_test.sql` blok 14. Fungsi baru WAJIB di-revoke
+- **Login wali tanpa gateway (019)**: kode aktivasi + PIN. OTP WA tetap ada,
+  otomatis disembunyikan bila gateway tak dikonfigurasi
+- **Mode WA (`waMode()`)**: gateway (WAHA) / **manual** (Kotak Keluar WA +
+  Daftar Siaran, 020) / dry-run (dev). Produksi tanpa gateway = manual
+- **Web Push (021)**: VAPID, fan-out di `enqueue_notification`, gratis & jalan
+  di mode WA apa pun
+- **Dependensi**: Next 15.5 + React 19 (form memakai `AksiForm` — React 19
+  me-reset form otomatis), Sentry 11 (`dataCollection` minimal + scrubber),
+  SheetJS resmi; `npm audit --omit=dev` = 0. **Tetap Tailwind 3.4** (v4 butuh
+  Safari 16.4+/Chrome 111+); statistik perangkat anonim (022) untuk meninjau ulang
+- **CSP**: root layout membaca `headers()` → semua halaman dinamis & ber-nonce
+  (halaman statis sebelumnya tanpa nonce → semua skrip diblokir)
+- **Backup drill** kini memeriksa paritas keamanan; restore `--no-privileges`
+  terbukti membuka lagi celah 018
+- **CI** 4 job; job `supabase` menjalankan pentest (60), UAT (18) & backup drill
+  pada Supabase lokal sungguhan di tiap push
+- 🔴 **Cron (023, 28 Okt)**: Vercel Cron memanggil **GET + `Authorization:
+  Bearer`**, route lama hanya POST + `x-cron-secret` → **405, worker
+  notifikasi & digest tak pernah jalan di produksi**. Kini menerima keduanya
+  (`lib/cron-auth.ts`, timing-safe, `npm run test:cron`). Digest dibuat
+  idempoten per hari WITA (cron bisa terpanggil ganda). Paket Hobby menolak
+  jadwal `*/5` → butuh Pro, atau pakai alternatif pg_cron (CHECKLIST §4)
+
 ## Sisa sebelum Go-Live (bukan kode)
 - **UAT lapangan oleh sekolah pilot** — butuh sekolah, admin, dan wali sungguhan;
   ikuti `docs/UAT-SEKOLAH-PILOT.md`. Gladi resik teknis + seluruh jalur kritis
-  (termasuk hook OTP) sudah lulus; keterpakaian oleh orang tua sungguhan hanya
-  bisa dibuktikan di lapangan
-- Kredensial produksi: gateway WA (Fonnte/Wablas), `SEND_SMS_HOOK_SECRET`, OCR
-  Sumopod (opsional), PITR + MFA di Supabase Cloud
-- Isi `WA_GATEWAY_URL`/`WA_GATEWAY_TOKEN` (Fonnte/Wablas) — tanpa itu notifikasi jalan mode dry-run
-- 2FA TOTP untuk `super_admin` & `admin_keuangan` (PRD §6.1) — dijadwalkan v2
-- Aktifkan PITR + jadwal export terenkripsi di Supabase Cloud
+  sudah lulus; keterpakaian oleh orang tua sungguhan hanya bisa dibuktikan di
+  lapangan
+- Ikuti `docs/CHECKLIST-GO-LIVE.md`: Supabase Cloud (PITR + MFA TOTP — 2FA
+  admin sudah wajib di kode & RLS), Vercel **Pro** + verifikasi 2 cron = 200,
+  kunci VAPID produksi, `CRON_SECRET`, Sentry DSN
+- WA: go-live bisa langsung dengan **mode manual**; gateway WAHA menyusul
+  setelah ada nomor khusus (`docs/SETUP-GATEWAY-WA.md`)
 
 ## Catatan Dev (penting saat verifikasi browser)
 - **JANGAN jalankan `npm run build` saat dev server hidup** — keduanya berbagi `.next` dan saling menimpa, menyebabkan cache korup (`Cannot find module './vendor-chunks/*.js'`, `main-app.js` 404, komponen client tak terhidrasi). Ini akar semua insiden korupsi selama Sprint 4–7. Fix bila terlanjur: stop dev server → `rm -rf .next` → start lagi. Urutan aman: stop dev → build → start dev.
 
 ## Stack
-Next.js 14 (App Router) · TypeScript · Tailwind + shadcn/ui · TanStack Query · Supabase (Auth, PostgreSQL, Storage, Edge Functions) · Zod · Vercel
+Next.js 15 (App Router) · React 19 · TypeScript · Tailwind 3.4 + shadcn/ui · TanStack Query · Supabase (Auth, PostgreSQL, Storage, Edge Functions) · Zod · Vercel
 
 ## Menjalankan Skema
 ```bash
@@ -342,13 +372,9 @@ Bucket storage dibuat manual (privat!): `payment-proofs` — lihat komentar §7 
 ```
 
 ## Environment Variables
-```
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=        # server-only: signed URL, notif worker
-WA_GATEWAY_URL= WA_GATEWAY_TOKEN= # Fonnte/Wablas
-SENTRY_DSN=
-```
+Daftar lengkap & penjelasannya: **`.env.local.example`** (sumber kebenaran —
+setiap `process.env.*` di kode tercatat di sana, kecuali variabel platform
+`NODE_ENV`/`VERCEL_ENV`/`NEXT_RUNTIME` dan parameter skrip sekali-jalan).
 
 ## Sprint 1 — Checklist (✅ selesai 18 Jul 2026)
 - [x] Scaffold Next.js 14.2.35 + TS strict + ESLint + Prettier
